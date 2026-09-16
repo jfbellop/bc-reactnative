@@ -1,43 +1,58 @@
 // ============================================================
 // MOCK DATA — src/data/mockData.ts
 // ============================================================
-// Datos de ejemplo para tu dominio asignado.
-// Reemplaza estos datos con información coherente a tu dominio.
+// Dominio: Máquinas Expendedoras
 // ============================================================
 
-import { Item } from '../types';
+import { VendingMachine } from '../types';
 
-// TODO: Reemplaza los valores por datos reales de tu dominio
-// Usa imágenes representativas — puedes usar URLs de picsum.photos
-// o incluir imágenes locales en assets/
-
-export const MOCK_ITEMS: Item[] = [
+export const MOCK_ITEMS: VendingMachine[] = [
   {
     id: '1',
-    name: 'Nombre del elemento 1',
-    subtitle: 'Subtítulo o descripción corta',
-    imageUri: 'https://picsum.photos/seed/item1/300/200',
-    // TODO: Agrega las propiedades específicas de tu dominio
+    name: 'Expendedora Snacks — Edificio A',
+    subtitle: 'Torre A, Piso 3',
+    imageUri: 'https://picsum.photos/seed/vending1/300/200',
+    category: 'Snacks',
+    location: 'Torre A, Piso 3, junto a cafetería',
+    status: 'Operativa',
+    capacity: 60,
+    currentStock: 52,
+    dailyRevenue: 185000,
   },
   {
     id: '2',
-    name: 'Nombre del elemento 2',
-    subtitle: 'Subtítulo o descripción corta',
-    imageUri: 'https://picsum.photos/seed/item2/300/200',
-    // TODO: Agrega las propiedades específicas de tu dominio
+    name: 'Expendedora Bebidas — Lobby',
+    subtitle: 'Lobby Principal',
+    imageUri: 'https://picsum.photos/seed/vending2/300/200',
+    category: 'Bebidas',
+    location: 'Lobby Principal, Recepción',
+    status: 'Stock Bajo',
+    capacity: 80,
+    currentStock: 14,
+    dailyRevenue: 220000,
   },
   {
     id: '3',
-    name: 'Nombre del elemento 3',
-    subtitle: 'Subtítulo o descripción corta',
-    imageUri: 'https://picsum.photos/seed/item3/300/200',
-    // TODO: Agrega las propiedades específicas de tu dominio
+    name: 'Café Express — Sala de Juntas',
+    subtitle: 'Piso 5',
+    imageUri: 'https://picsum.photos/seed/vending3/300/200',
+    category: 'Café',
+    location: 'Piso 5, Zona de Salas de Juntas',
+    status: 'Fuera de Servicio',
+    capacity: 40,
+    currentStock: 0,
+    dailyRevenue: 0,
   },
   {
     id: '4',
-    name: 'Nombre del elemento 4',
-    subtitle: 'Subtítulo o descripción corta',
-    imageUri: 'https://picsum.photos/seed/item4/300/200',
-    // TODO: Agrega las propiedades específicas de tu dominio
+    name: 'Opciones Saludables — Gimnasio',
+    subtitle: 'Piso 1',
+    imageUri: 'https://picsum.photos/seed/vending4/300/200',
+    category: 'Saludable',
+    location: 'Piso 1, Gimnasio Corporativo',
+    status: 'Operativa',
+    capacity: 45,
+    currentStock: 38,
+    dailyRevenue: 96000,
   },
 ];

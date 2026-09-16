@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "semana-01-proyecto",
-    "slug": "semana-01-proyecto",
+    "name": "vendcorp-maquinas-expendedoras",
+    "slug": "vendcorp-maquinas-expendedoras",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -22,6 +22,6 @@
       },
       "package": "com.bootcamp.semana01"
     },
-    "sdkVersion": "53.0.0"
+    "sdkVersion": "57.0.0"
   }
 }

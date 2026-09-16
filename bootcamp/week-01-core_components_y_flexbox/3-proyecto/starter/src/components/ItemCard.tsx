@@ -1,8 +1,7 @@
 // ============================================================
 // COMPONENT: ItemCard
 // ============================================================
-// Tarjeta reutilizable para mostrar un elemento del dominio.
-// Este componente se renderiza por cada item en HomeScreen.
+// Dominio: Máquinas Expendedoras
 // ============================================================
 
 import React from 'react';
@@ -13,81 +12,157 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import { Item } from '../types';
+import { VendingMachine, MachineStatus } from '../types';
 
 interface ItemCardProps {
-  item: Item;
-  onPress: (item: Item) => void;
+  item: VendingMachine;
+  onPress: (item: VendingMachine) => void;
+}
+
+const STATUS_COLORS: Record<MachineStatus, string> = {
+  Operativa: '#3fb950',
+  'Stock Bajo': '#d29922',
+  Mantenimiento: '#db6d28',
+  'Fuera de Servicio': '#f85149',
+};
+
+function formatCOP(value: number): string {
+  return value.toLocaleString('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  });
 }
 
 export function ItemCard({ item, onPress }: ItemCardProps): React.JSX.Element {
+  const statusColor = STATUS_COLORS[item.status];
+
   return (
-    // TODO: Implementar el layout de la tarjeta usando Flexbox
-    // La tarjeta debe mostrar: imagen, nombre, subtítulo y un botón de acción
-    //
-    // Estructura sugerida:
-    // <Pressable style={...} onPress={() => onPress(item)}>
-    //   <Image source={{ uri: item.imageUri }} style={...} resizeMode="cover" />
-    //   <View style={...}>
-    //     <Text style={...}>{item.name}</Text>
-    //     <Text style={...}>{item.subtitle}</Text>
-    //     {/* TODO: Agrega las propiedades específicas de tu dominio */}
-    //   </View>
-    // </Pressable>
-    <View style={styles.placeholder}>
-      <Text style={styles.placeholderText}>ItemCard — por implementar</Text>
-      <Text style={styles.placeholderHint}>{item.name}</Text>
-    </View>
+    <Pressable
+      onPress={() => onPress(item)}
+      style={({ pressed }) => [
+        styles.card,
+        pressed && styles.cardPressed,
+      ]}
+    >
+      <Image source={{ uri: item.imageUri }} style={styles.cardImage} resizeMode="cover" />
+
+      <View style={styles.badgeRow}>
+        <View style={styles.categoryBadge}>
+          <Text style={styles.categoryText}>{item.category}</Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+          <Text style={styles.statusText}>{item.status}</Text>
+        </View>
+      </View>
+
+      <View style={styles.cardBody}>
+        <Text style={styles.cardName}>{item.name}</Text>
+        <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
+
+        <View style={styles.footerRow}>
+          <View style={styles.footerColumn}>
+            <Text style={styles.footerLabel}>Stock</Text>
+            <Text style={styles.footerValue}>
+              {item.currentStock}/{item.capacity}
+            </Text>
+          </View>
+          <View style={[styles.footerColumn, styles.footerColumnRight]}>
+            <Text style={styles.footerLabel}>Ingreso diario</Text>
+            <Text style={styles.footerValueRevenue}>
+              {formatCOP(item.dailyRevenue)}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  // TODO: Reemplaza estos estilos placeholder con los de tu tarjeta
-  placeholder: {
+  card: {
     backgroundColor: '#161b22',
     borderRadius: 12,
-    padding: 24,
     marginBottom: 12,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#30363d',
-    borderStyle: 'dashed',
+  },
+  cardPressed: {
+    opacity: 0.75,
+  },
+  cardImage: {
+    width: '100%',
+    height: 160,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 12,
+    marginTop: -14,
   },
-  placeholderText: {
-    color: '#8b949e',
-    fontSize: 12,
-    marginBottom: 4,
+  categoryBadge: {
+    backgroundColor: '#1f6feb',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
-  placeholderHint: {
+  categoryText: {
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
   },
-
-  // Estilos sugeridos para la tarjeta real — descomenta y adapta:
-  // card: {
-  //   backgroundColor: '#161b22',
-  //   borderRadius: 12,
-  //   marginBottom: 12,
-  //   overflow: 'hidden',
-  //   borderWidth: 1,
-  //   borderColor: '#30363d',
-  // },
-  // cardImage: {
-  //   width: '100%',
-  //   height: 160,
-  // },
-  // cardBody: {
-  //   padding: 16,
-  //   gap: 4,
-  // },
-  // cardName: {
-  //   fontSize: 18,
-  //   fontWeight: 'bold',
-  //   color: '#ffffff',
-  // },
-  // cardSubtitle: {
-  //   fontSize: 14,
-  //   color: '#8b949e',
-  // },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusText: {
+    color: '#0d1117',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cardBody: {
+    padding: 16,
+    gap: 4,
+  },
+  cardName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#8b949e',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#30363d',
+  },
+  footerColumn: {
+    alignItems: 'flex-start',
+  },
+  footerColumnRight: {
+    alignItems: 'flex-end',
+  },
+  footerLabel: {
+    fontSize: 11,
+    color: '#8b949e',
+  },
+  footerValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  footerValueRevenue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#3fb950',
+  },
 });

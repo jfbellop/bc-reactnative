@@ -1,21 +1,31 @@
 // ============================================================
 // TYPES — src/types/index.ts
 // ============================================================
-// Define aquí la interfaz del elemento de tu dominio asignado.
-// Este type se usará en mockData.ts, ItemCard.tsx y HomeScreen.tsx
+// Dominio: Máquinas Expendedoras
 // ============================================================
 
-// TODO: Renombra esta interfaz con el nombre de tu elemento
-// Ejemplos: Book, Medication, Member, Dish, Movie, Destination
-export interface Item {
+export type MachineCategory =
+  | 'Snacks'
+  | 'Bebidas'
+  | 'Café'
+  | 'Mixta'
+  | 'Saludable';
+
+export type MachineStatus =
+  | 'Operativa'
+  | 'Stock Bajo'
+  | 'Mantenimiento'
+  | 'Fuera de Servicio';
+
+export interface VendingMachine {
   id: string;
   name: string;
   imageUri: string;
-  // TODO: Agrega las propiedades específicas de tu dominio
-  // Ejemplos:
-  //   Biblioteca → author: string; year: number;
-  //   Farmacia → activeIngredient: string; price: number;
-  //   Gimnasio → plan: string; expiresAt: string;
-  //   Restaurante → price: number; description: string;
-  subtitle: string; // campo genérico de apoyo — personaliza según tu dominio
+  subtitle: string; // usado como ubicación corta de la máquina
+  category: MachineCategory;
+  location: string;
+  status: MachineStatus;
+  capacity: number;
+  currentStock: number;
+  dailyRevenue: number;
 }
