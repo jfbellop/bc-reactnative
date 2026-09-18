@@ -1,81 +1,97 @@
 // src/data/mockData.ts
-// Datos de prueba genéricos para la app.
-// TODO: reemplazar con datos de tu dominio asignado.
+// Dominio: Máquinas Expendedoras
 
 import type { Item } from '../types';
-
-// ============================================
-// LISTA PRINCIPAL DE ELEMENTOS
-// ============================================
-// Estos son datos genéricos de placeholder.
-// Debes reemplazarlos con datos coherentes a tu dominio.
-//
-// Ejemplos:
-//   Biblioteca  → libros con autor, ISBN, páginas
-//   Farmacia    → medicamentos con precio, stock, dosis
-//   Gimnasio    → rutinas con duración, grupos musculares
-//   Restaurante → platillos con precio, ingredientes
-//   Cine        → películas con director, año, género
 
 export const ITEMS: Item[] = [
   {
     id: '1',
-    name: 'Elemento 01',
-    description: 'Descripción del primer elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Expendedora Snacks — Torre A',
+    description: 'Snacks salados y dulces, alta rotación en almuerzo.',
+    category: 'Snacks',
+    location: 'Torre A, Piso 3, junto a cafetería',
+    status: 'Operativa',
+    capacity: 60,
+    currentStock: 52,
+    dailyRevenue: 185000,
   },
   {
     id: '2',
-    name: 'Elemento 02',
-    description: 'Descripción del segundo elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Expendedora Bebidas — Lobby',
+    description: 'Bebidas frías: gaseosas, agua y jugos.',
+    category: 'Bebidas',
+    location: 'Lobby Principal, Recepción',
+    status: 'Stock Bajo',
+    capacity: 80,
+    currentStock: 14,
+    dailyRevenue: 220000,
   },
   {
     id: '3',
-    name: 'Elemento 03',
-    description: 'Descripción del tercer elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Café Express — Sala de Juntas',
+    description: 'Máquina de café en falla mecánica, técnico programado.',
+    category: 'Café',
+    location: 'Piso 5, Zona de Salas de Juntas',
+    status: 'Fuera de Servicio',
+    capacity: 40,
+    currentStock: 0,
+    dailyRevenue: 0,
   },
   {
     id: '4',
-    name: 'Elemento 04',
-    description: 'Descripción del cuarto elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Opciones Saludables — Gimnasio',
+    description: 'Barras proteicas, frutos secos y bebidas isotónicas.',
+    category: 'Saludable',
+    location: 'Piso 1, Gimnasio Corporativo',
+    status: 'Operativa',
+    capacity: 45,
+    currentStock: 38,
+    dailyRevenue: 96000,
   },
   {
     id: '5',
-    name: 'Elemento 05',
-    description: 'Descripción del quinto elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Expendedora Mixta — Torre B',
+    description: 'Combinación de snacks y bebidas en un solo punto.',
+    category: 'Mixta',
+    location: 'Torre B, Piso 2, pasillo principal',
+    status: 'Operativa',
+    capacity: 70,
+    currentStock: 61,
+    dailyRevenue: 154000,
   },
   {
     id: '6',
-    name: 'Elemento 06',
-    description: 'Descripción del sexto elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Café Express — Entrada Torre A',
+    description: 'Café recién molido, ideal antes de entrar a oficina.',
+    category: 'Café',
+    location: 'Torre A, Piso 1, entrada principal',
+    status: 'Operativa',
+    capacity: 40,
+    currentStock: 29,
+    dailyRevenue: 132000,
   },
   {
     id: '7',
-    name: 'Elemento 07',
-    description: 'Descripción del séptimo elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Expendedora Bebidas — Cafetería Central',
+    description: 'En mantenimiento preventivo programado.',
+    category: 'Bebidas',
+    location: 'Cafetería Central, Piso 2',
+    status: 'Mantenimiento',
+    capacity: 80,
+    currentStock: 40,
+    dailyRevenue: 0,
   },
   {
     id: '8',
-    name: 'Elemento 08',
-    description: 'Descripción del octavo elemento de tu dominio.',
-    // TODO: agregar campos específicos de tu dominio
+    name: 'Expendedora Snacks — Auditorio',
+    description: 'Requiere reabastecimiento pronto.',
+    category: 'Snacks',
+    location: 'Piso 4, junto al Auditorio',
+    status: 'Stock Bajo',
+    capacity: 60,
+    currentStock: 9,
+    dailyRevenue: 88000,
   },
 ];
 
-// ============================================
-// LISTA DE FAVORITOS
-// ============================================
-// Subconjunto de elementos para la pestaña Favorites.
-// TODO: seleccionar elementos coherentes con tu dominio.
-
-export const FAVORITES: Item[] = [
-  ITEMS[0],
-  ITEMS[2],
-  ITEMS[4],
-];
+export const FAVORITES: Item[] = [ITEMS[0], ITEMS[3], ITEMS[4]];

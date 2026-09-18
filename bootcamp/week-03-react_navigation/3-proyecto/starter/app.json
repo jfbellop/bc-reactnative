@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "week03-navigation",
-    "slug": "week03-navigation",
+    "name": "vendcorp-semana03",
+    "slug": "vendcorp-semana03",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -22,9 +22,6 @@
       },
       "package": "dev.bootcamp.week03navigation"
     },
-    "plugins": [
-      "expo-router"
-    ],
     "newArchEnabled": true
   }
 }

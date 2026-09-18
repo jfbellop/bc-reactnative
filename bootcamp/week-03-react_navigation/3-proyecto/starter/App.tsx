@@ -1,24 +1,15 @@
-// App.tsx
-// Punto de entrada principal de la app.
-// NavigationContainer debe envolver TODA la navegación de la app.
-// Este archivo no necesita cambios — todo el trabajo de navegación
-// va en src/navigation/RootNavigator.tsx
-
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { COLORS } from './src/theme';
 
 export default function App(): React.JSX.Element {
   return (
-    // SafeAreaProvider garantiza que la safe area (notch, island) se calcule correctamente
-    <SafeAreaProvider>
-      {/* NavigationContainer gestiona el estado del historial de navegación */}
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
-      <StatusBar style="light" />
-    </SafeAreaProvider>
+    <NavigationContainer>
+      <StatusBar style="light" backgroundColor={COLORS.background} />
+      <RootNavigator />
+    </NavigationContainer>
   );
 }

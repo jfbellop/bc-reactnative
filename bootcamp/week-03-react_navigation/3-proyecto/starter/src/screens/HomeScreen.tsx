@@ -1,7 +1,7 @@
 // src/screens/HomeScreen.tsx
-// Pantalla de lista — muestra todos los elementos del dominio.
-// Al presionar un ítem navega al DetailScreen pasando los params.
+// Dominio: Máquinas Expendedoras
 
+import React from 'react';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -14,37 +14,41 @@ import {
 
 import { ITEMS } from '../data/mockData';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
-import type { Item } from '../types';
+import type { Item, MachineStatus } from '../types';
 import type { HomeStackParamList } from '../navigation/types';
 
-// Tipo del navigation hook para este Stack
 type HomeScreenNavigationProp = NativeStackNavigationProp<
   HomeStackParamList,
   'HomeList'
 >;
 
+const STATUS_COLORS: Record<MachineStatus, string> = {
+  Operativa: COLORS.success,
+  'Stock Bajo': COLORS.warning,
+  Mantenimiento: COLORS.info,
+  'Fuera de Servicio': COLORS.error,
+};
+
 export function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeScreenNavigationProp>();
 
-  /**
-   * Navega al DetailScreen pasando los datos del ítem seleccionado.
-   * TODO: agrega los campos extra de tu dominio a los params
-   * Ejemplo: navigation.navigate('HomeDetail', { id, name, author, isbn })
-   */
   function handleItemPress(item: Item): void {
     navigation.navigate('HomeDetail', {
       id: item.id,
       name: item.name,
-      // TODO: pasar campos adicionales de tu dominio
+      description: item.description,
+      category: item.category,
+      location: item.location,
+      status: item.status,
+      capacity: item.capacity,
+      currentStock: item.currentStock,
+      dailyRevenue: item.dailyRevenue,
     });
   }
 
-  /**
-   * Renderiza cada ítem de la lista.
-   * TODO: adaptar el diseño de la tarjeta a tu dominio.
-   * Puedes mostrar más información (precio, autor, género, etc.)
-   */
   function renderItem({ item }: { item: Item }): React.JSX.Element {
+    const statusColor = STATUS_COLORS[item.status];
+
     return (
       <Pressable
         style={({ pressed }) => [
@@ -52,16 +56,19 @@ export function HomeScreen(): React.JSX.Element {
           pressed && styles.cardPressed,
         ]}
         onPress={() => handleItemPress(item)}
-        // testID permite encontrar el elemento en tests
         testID={`item-${item.id}`}
       >
-        <Text style={styles.itemName}>{item.name}</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.itemName}>{item.name}</Text>
+          <View style={[styles.badge, { backgroundColor: `${statusColor}33` }]}>
+            <Text style={[styles.badgeText, { color: statusColor }]}>
+              {item.status}
+            </Text>
+          </View>
+        </View>
         <Text style={styles.itemDescription} numberOfLines={2}>
-          {item.description}
+          {item.category} · {item.location}
         </Text>
-        {/* TODO: agregar más información del ítem según tu dominio */}
-        {/* Ejemplo (Farmacia): <Text style={styles.price}>${item.price}</Text> */}
-        {/* Ejemplo (Biblioteca): <Text style={styles.author}>{item.author}</Text> */}
         <Text style={styles.chevron}>{'›'}</Text>
       </Pressable>
     );
@@ -69,17 +76,15 @@ export function HomeScreen(): React.JSX.Element {
 
   return (
     <View style={styles.container}>
-      {/* TODO: agregar un header o título descriptivo de tu dominio */}
-      {/* <Text style={styles.header}>Mi Biblioteca</Text> */}
       <FlatList
         data={ITEMS}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
-        // Separador visual entre ítems
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        // TODO: agregar ListEmptyComponent para cuando no haya datos
-        // ListEmptyComponent={<Text style={styles.empty}>Sin elementos</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No hay máquinas registradas</Text>
+        }
       />
     </View>
   );
@@ -104,16 +109,33 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     backgroundColor: COLORS.surfaceAlt,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.xs,
+    paddingRight: SPACING.lg,
+  },
   itemName: {
+    flex: 1,
     fontSize: TYPOGRAPHY.size.md,
     fontWeight: TYPOGRAPHY.weight.semibold,
     color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
+    marginRight: SPACING.sm,
   },
   itemDescription: {
     fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textSecondary,
     lineHeight: 18,
+  },
+  badge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+  },
+  badgeText: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.semibold,
   },
   chevron: {
     position: 'absolute',
@@ -124,5 +146,10 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: SPACING.sm,
+  },
+  empty: {
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    paddingTop: SPACING.xxl,
   },
 });

@@ -1,47 +1,27 @@
 // src/types/index.ts
-// Define los tipos de datos del dominio.
-// Adapta la interfaz Item a tu dominio asignado.
+// Dominio: Máquinas Expendedoras
 
-// ============================================
-// INTERFACE PRINCIPAL DEL DOMINIO
-// ============================================
+export type MachineCategory =
+  | 'Snacks'
+  | 'Bebidas'
+  | 'Café'
+  | 'Mixta'
+  | 'Saludable';
+
+export type MachineStatus =
+  | 'Operativa'
+  | 'Stock Bajo'
+  | 'Mantenimiento'
+  | 'Fuera de Servicio';
 
 export interface Item {
   id: string;
-  // Nombre del elemento (libro, medicamento, película, rutina, etc.)
   name: string;
-  // Descripción general del elemento
   description: string;
-
-  // TODO: agregar propiedades específicas de tu dominio
-  // Ejemplos según dominio:
-
-  // Biblioteca:
-  // author: string;
-  // isbn: string;
-  // pages: number;
-  // genre: string;
-
-  // Farmacia:
-  // price: number;
-  // stock: number;
-  // dosage: string;
-  // requiresPrescription: boolean;
-
-  // Gimnasio:
-  // duration: number;   // en minutos
-  // difficulty: 'basic' | 'intermediate' | 'advanced';
-  // muscleGroups: string[];
-
-  // Restaurante:
-  // price: number;
-  // ingredients: string[];
-  // isVegetarian: boolean;
-  // category: string;
-
-  // Cine:
-  // director: string;
-  // year: number;
-  // genre: string;
-  // duration: number;
+  category: MachineCategory;
+  location: string;
+  status: MachineStatus;
+  capacity: number;
+  currentStock: number;
+  dailyRevenue: number;
 }
