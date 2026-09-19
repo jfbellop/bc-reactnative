@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "week04-zustand",
-    "slug": "week04-zustand",
+    "name": "vendcorp-semana04",
+    "slug": "vendcorp-semana04",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

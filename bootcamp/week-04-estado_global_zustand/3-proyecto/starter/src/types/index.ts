@@ -1,15 +1,27 @@
 // src/types/index.ts
-// Interface principal del dominio.
-// TODO: adaptar a tu dominio asignado.
+// Dominio: Máquinas Expendedoras
+
+export type MachineCategory =
+  | 'Snacks'
+  | 'Bebidas'
+  | 'Café'
+  | 'Mixta'
+  | 'Saludable';
+
+export type MachineStatus =
+  | 'Operativa'
+  | 'Stock Bajo'
+  | 'Mantenimiento'
+  | 'Fuera de Servicio';
 
 export interface Item {
   id: string;
   name: string;
   description: string;
-  // TODO: agregar campos específicos de tu dominio
-  // Biblioteca:   author: string; isbn: string; pages: number;
-  // Farmacia:     price: number; stock: number; dosage: string;
-  // Gimnasio:     duration: number; difficulty: 'basic' | 'intermediate' | 'advanced';
-  // Restaurante:  price: number; category: string; isVegetarian: boolean;
-  // Cine:         director: string; year: number; genre: string;
+  category: MachineCategory;
+  location: string;
+  status: MachineStatus;
+  capacity: number;
+  currentStock: number;
+  dailyRevenue: number;
 }

@@ -1,19 +1,15 @@
-// App.tsx — Semana 04: Estado Global con Zustand
-// NavigationContainer raíz. No necesita cambios.
-
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { COLORS } from './src/theme';
 
 export default function App(): React.JSX.Element {
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
-      <StatusBar style="light" />
-    </SafeAreaProvider>
+    <NavigationContainer>
+      <StatusBar style="light" backgroundColor={COLORS.background} />
+      <RootNavigator />
+    </NavigationContainer>
   );
 }

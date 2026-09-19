@@ -1,6 +1,5 @@
 // src/screens/HomeScreen.tsx
-// Pantalla principal: lista de ítems con navegación al detalle.
-// El estudiante debe adaptar el diseño y los campos a su dominio.
+// Dominio: Máquinas Expendedoras
 
 import React from 'react';
 import {
@@ -16,16 +15,17 @@ import { useNavigation } from '@react-navigation/native';
 
 import { ITEMS } from '../data/mockData';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
-import type { Item } from '../types';
+import type { Item, MachineStatus } from '../types';
 import type { HomeStackParamList } from '../navigation/types';
 
 type HomeScreenNavProp = NativeStackNavigationProp<HomeStackParamList, 'HomeList'>;
 
-// ============================================================
-// SUB-COMPONENTE: ItemCard
-// ============================================================
-// TODO: adaptar la tarjeta a las propiedades específicas de tu dominio.
-//   Mostrar, por ejemplo, price (Farmacia), author (Biblioteca), etc.
+const STATUS_COLORS: Record<MachineStatus, string> = {
+  Operativa: COLORS.success,
+  'Stock Bajo': COLORS.warning,
+  Mantenimiento: COLORS.accent,
+  'Fuera de Servicio': COLORS.error,
+};
 
 interface ItemCardProps {
   item: Item;
@@ -33,26 +33,30 @@ interface ItemCardProps {
 }
 
 function ItemCard({ item, onPress }: ItemCardProps): React.JSX.Element {
+  const statusColor = STATUS_COLORS[item.status];
+
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       onPress={onPress}
       testID={`item-card-${item.id}`}
     >
-      {/* Placeholder del thumbnail */}
       <View style={styles.thumbnail}>
-        {/* TODO: reemplazar con imagen real usando expo-image o Image */}
-        <Text style={styles.thumbnailText}>{item.name.charAt(0)}</Text>
+        <Text style={styles.thumbnailText}>{item.category.charAt(0)}</Text>
       </View>
 
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle} numberOfLines={1}>
           {item.name}
         </Text>
-        <Text style={styles.cardDescription} numberOfLines={2}>
-          {item.description}
+        <Text style={styles.cardDescription} numberOfLines={1}>
+          {item.category} · {item.location}
         </Text>
-        {/* TODO: agregar campos específicos de tu dominio aquí */}
+        <View style={[styles.badge, { backgroundColor: `${statusColor}33` }]}>
+          <Text style={[styles.badgeText, { color: statusColor }]}>
+            {item.status}
+          </Text>
+        </View>
       </View>
 
       <Text style={styles.chevron}>›</Text>
@@ -60,15 +64,9 @@ function ItemCard({ item, onPress }: ItemCardProps): React.JSX.Element {
   );
 }
 
-// ============================================================
-// PANTALLA: HomeScreen
-// ============================================================
-
 export function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeScreenNavProp>();
 
-  // TODO: leer los ítems desde un Zustand store (opcional bonus)
-  // o desde la API real de tu dominio (semana 5 — TanStack Query)
   const items = ITEMS;
 
   const renderItem: ListRenderItem<Item> = ({ item }) => (
@@ -88,23 +86,18 @@ export function HomeScreen(): React.JSX.Element {
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        // TODO: agregar un header con estadísticas (total de ítems, etc.)
         ListHeaderComponent={
           <Text style={styles.sectionLabel}>
-            {items.length} ítem{items.length !== 1 ? 's' : ''}
+            {items.length} máquina{items.length !== 1 ? 's' : ''}
           </Text>
         }
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No hay ítems disponibles.</Text>
+          <Text style={styles.emptyText}>No hay máquinas disponibles.</Text>
         }
       />
     </View>
   );
 }
-
-// ============================================================
-// ESTILOS
-// ============================================================
 
 const styles = StyleSheet.create({
   container: {
@@ -159,6 +152,17 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     ...TYPOGRAPHY.caption,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    marginTop: 2,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   chevron: {
     ...TYPOGRAPHY.h2,

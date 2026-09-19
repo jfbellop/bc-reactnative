@@ -1,7 +1,5 @@
 // src/screens/DetailScreen.tsx
-// Pantalla de detalle: muestra la información completa de un ítem
-// y permite guardarlo / quitarlo usando el store de Zustand.
-// Esta pantalla demuestra cómo acceder al store desde cualquier screen.
+// Dominio: Máquinas Expendedoras
 
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -9,78 +7,85 @@ import { useRoute, type RouteProp } from '@react-navigation/native';
 
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
 import type { HomeStackParamList } from '../navigation/types';
-
-// TODO: importar el store y el tipo Item
-// import { useSavedStore } from '../stores/savedStore';
-// import type { Item } from '../types';
-// import { ITEMS } from '../data/mockData';
+import { useSavedStore } from '../stores/savedStore';
+import { ITEMS } from '../data/mockData';
 
 type DetailRouteProp = RouteProp<HomeStackParamList, 'HomeDetail'>;
 
-// ============================================================
-// PANTALLA: DetailScreen
-// ============================================================
+function formatCOP(value: number): string {
+  return value.toLocaleString('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  });
+}
 
 export function DetailScreen(): React.JSX.Element {
   const route = useRoute<DetailRouteProp>();
   const { id, name } = route.params;
 
-  // TODO: buscar el ítem completo en ITEMS usando el id de params
-  // const item: Item | undefined = ITEMS.find((i) => i.id === id);
+  const item = ITEMS.find((i) => i.id === id);
 
-  // ──────────────────────────────────────────────────────────
-  // TODO: obtener los selectores del savedStore
-  // ──────────────────────────────────────────────────────────
-  // Usar selectores individuales para evitar re-renders innecesarios:
-  //
-  // const isItemSaved = useSavedStore((state) => state.isItemSaved);
-  // const addItem    = useSavedStore((state) => state.addItem);
-  // const removeItem = useSavedStore((state) => state.removeItem);
-  //
-  // Luego calcular si el ítem actual está guardado:
-  // const isSaved = isItemSaved(id);
+  const isItemSaved = useSavedStore((state) => state.isItemSaved);
+  const addItem = useSavedStore((state) => state.addItem);
+  const removeItem = useSavedStore((state) => state.removeItem);
 
-  // Placeholder hasta que el store esté implementado
-  const isSaved = false;
+  const isSaved = isItemSaved(id);
 
-  // TODO: implementar handleToggleSave
-  // Si el ítem está guardado → removeItem(id)
-  // Si no está guardado → addItem(item)  [necesitas el objeto Item completo]
   const handleToggleSave = (): void => {
-    // TODO: implementar
-    // if (isSaved) {
-    //   removeItem(id);
-    // } else if (item) {
-    //   addItem(item);
-    // }
+    if (isSaved) {
+      removeItem(id);
+    } else if (item) {
+      addItem(item);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Icono / thumbnail del ítem */}
       <View style={styles.hero}>
         <Text style={styles.heroLetter}>{name.charAt(0)}</Text>
       </View>
 
-      {/* Información principal */}
       <View style={styles.info}>
         <Text style={styles.title}>{name}</Text>
         <Text style={styles.id}>ID: {id}</Text>
 
-        {/* TODO: mostrar la descripción del ítem (item.description) */}
-        {/* TODO: mostrar campos específicos de tu dominio */}
-        <Text style={styles.description}>
-          Adapta esta pantalla a tu dominio: muestra los detalles
-          relevantes de tu ítem aquí.
-        </Text>
+        {item && (
+          <>
+            <Text style={styles.description}>{item.description}</Text>
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Categoría</Text>
+              <Text style={styles.fieldValue}>{item.category}</Text>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Ubicación</Text>
+              <Text style={styles.fieldValue}>{item.location}</Text>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Estado</Text>
+              <Text style={styles.fieldValue}>{item.status}</Text>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Stock</Text>
+              <Text style={styles.fieldValue}>
+                {item.currentStock}/{item.capacity} unidades
+              </Text>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Ingreso diario</Text>
+              <Text style={styles.fieldValue}>
+                {formatCOP(item.dailyRevenue)}
+              </Text>
+            </View>
+          </>
+        )}
       </View>
 
-      {/* ──────────────────────────────────────────────────── */}
-      {/* BOTÓN GUARDAR / QUITAR — conectado al store Zustand  */}
-      {/* ──────────────────────────────────────────────────── */}
-      {/* Este botón demuestra el estado compartido entre pantallas:
-          al guardar aquí, el badge del Tab "Guardados" se actualiza
-          automáticamente sin necesidad de pasar props ni callbacks. */}
       <Pressable
         style={({ pressed }) => [
           styles.saveButton,
@@ -97,10 +102,6 @@ export function DetailScreen(): React.JSX.Element {
     </View>
   );
 }
-
-// ============================================================
-// ESTILOS
-// ============================================================
 
 const styles = StyleSheet.create({
   container: {
@@ -141,6 +142,23 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 24,
     marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
+  },
+  field: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  fieldLabel: {
+    ...TYPOGRAPHY.label,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: SPACING.xs,
+  },
+  fieldValue: {
+    ...TYPOGRAPHY.body,
   },
   saveButton: {
     backgroundColor: COLORS.card,

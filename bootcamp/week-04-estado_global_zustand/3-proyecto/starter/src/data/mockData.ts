@@ -1,57 +1,95 @@
 // src/data/mockData.ts
-// Datos de ejemplo genéricos para el proyecto.
-// El estudiante debe reemplazar estos datos con los de su dominio asignado.
+// Dominio: Máquinas Expendedoras
 
 import type { Item } from '../types';
 
-// ============================================================
-// LISTA DE ÍTEMS
-// ============================================================
-// TODO: reemplaza estos ítems con los de tu dominio asignado.
-//   Biblioteca  → libros con author, year, genre
-//   Farmacia    → medicamentos con price, stock, prescription
-//   Gimnasio    → clases con instructor, schedule, capacity
-//   Restaurante → platillos con price, category, spiceLevel
-//   Cine        → películas con director, duration, genre
 export const ITEMS: Item[] = [
   {
     id: '1',
-    name: 'Ítem Uno',
-    description: 'Descripción detallada del primer ítem. Adapta este campo a tu dominio.',
+    name: 'Expendedora Snacks — Torre A',
+    description: 'Snacks salados y dulces, alta rotación en almuerzo.',
+    category: 'Snacks',
+    location: 'Torre A, Piso 3, junto a cafetería',
+    status: 'Operativa',
+    capacity: 60,
+    currentStock: 52,
+    dailyRevenue: 185000,
   },
   {
     id: '2',
-    name: 'Ítem Dos',
-    description: 'Descripción detallada del segundo ítem. Adapta este campo a tu dominio.',
+    name: 'Expendedora Bebidas — Lobby',
+    description: 'Bebidas frías: gaseosas, agua y jugos.',
+    category: 'Bebidas',
+    location: 'Lobby Principal, Recepción',
+    status: 'Stock Bajo',
+    capacity: 80,
+    currentStock: 14,
+    dailyRevenue: 220000,
   },
   {
     id: '3',
-    name: 'Ítem Tres',
-    description: 'Descripción detallada del tercer ítem. Adapta este campo a tu dominio.',
+    name: 'Café Express — Sala de Juntas',
+    description: 'Máquina de café en falla mecánica, técnico programado.',
+    category: 'Café',
+    location: 'Piso 5, Zona de Salas de Juntas',
+    status: 'Fuera de Servicio',
+    capacity: 40,
+    currentStock: 0,
+    dailyRevenue: 0,
   },
   {
     id: '4',
-    name: 'Ítem Cuatro',
-    description: 'Descripción detallada del cuarto ítem. Adapta este campo a tu dominio.',
+    name: 'Opciones Saludables — Gimnasio',
+    description: 'Barras proteicas, frutos secos y bebidas isotónicas.',
+    category: 'Saludable',
+    location: 'Piso 1, Gimnasio Corporativo',
+    status: 'Operativa',
+    capacity: 45,
+    currentStock: 38,
+    dailyRevenue: 96000,
   },
   {
     id: '5',
-    name: 'Ítem Cinco',
-    description: 'Descripción detallada del quinto ítem. Adapta este campo a tu dominio.',
+    name: 'Expendedora Mixta — Torre B',
+    description: 'Combinación de snacks y bebidas en un solo punto.',
+    category: 'Mixta',
+    location: 'Torre B, Piso 2, pasillo principal',
+    status: 'Operativa',
+    capacity: 70,
+    currentStock: 61,
+    dailyRevenue: 154000,
   },
   {
     id: '6',
-    name: 'Ítem Seis',
-    description: 'Descripción detallada del sexto ítem. Adapta este campo a tu dominio.',
+    name: 'Café Express — Entrada Torre A',
+    description: 'Café recién molido, ideal antes de entrar a oficina.',
+    category: 'Café',
+    location: 'Torre A, Piso 1, entrada principal',
+    status: 'Operativa',
+    capacity: 40,
+    currentStock: 29,
+    dailyRevenue: 132000,
   },
   {
     id: '7',
-    name: 'Ítem Siete',
-    description: 'Descripción detallada del séptimo ítem. Adapta este campo a tu dominio.',
+    name: 'Expendedora Bebidas — Cafetería Central',
+    description: 'En mantenimiento preventivo programado.',
+    category: 'Bebidas',
+    location: 'Cafetería Central, Piso 2',
+    status: 'Mantenimiento',
+    capacity: 80,
+    currentStock: 40,
+    dailyRevenue: 0,
   },
   {
     id: '8',
-    name: 'Ítem Ocho',
-    description: 'Descripción detallada del octavo ítem. Adapta este campo a tu dominio.',
+    name: 'Expendedora Snacks — Auditorio',
+    description: 'Requiere reabastecimiento pronto.',
+    category: 'Snacks',
+    location: 'Piso 4, junto al Auditorio',
+    status: 'Stock Bajo',
+    capacity: 60,
+    currentStock: 9,
+    dailyRevenue: 88000,
   },
 ];
