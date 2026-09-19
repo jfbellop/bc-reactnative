@@ -1,6 +1,5 @@
 // src/screens/HomeScreen.tsx
-// Pantalla principal: lista de ítems cargada desde la API.
-// TODO: conectar con useItems() y manejar todos los estados de red.
+// Dominio: Máquinas Expendedoras
 
 import React from 'react';
 import {
@@ -18,15 +17,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
 import type { Item } from '../types';
 import type { RootStackParamList } from '../navigation/types';
-
-// TODO: importar el hook de fetching
-// import { useItems } from '../hooks/useItems';
+import { useItems } from '../hooks/useItems';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
-
-// ============================================================
-// SUB-COMPONENTE: ItemCard
-// ============================================================
 
 interface ItemCardProps {
   item: Item;
@@ -41,14 +34,12 @@ function ItemCard({ item, onPress }: ItemCardProps): React.JSX.Element {
       testID={`item-card-${item.id}`}
     >
       <View style={styles.cardAvatar}>
-        {/* TODO: mostrar imagen del ítem si tu API la provee */}
         <Text style={styles.cardAvatarText}>
           {String(item.name).charAt(0).toUpperCase()}
         </Text>
       </View>
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle} numberOfLines={1}>
-          {/* TODO: cambiar 'name' por el campo principal de tu dominio */}
           {item.name}
         </Text>
         {item.description && (
@@ -56,52 +47,31 @@ function ItemCard({ item, onPress }: ItemCardProps): React.JSX.Element {
             {item.description}
           </Text>
         )}
-        {/* TODO: mostrar campos adicionales de tu dominio */}
-        {/* Ejemplo: <Text style={styles.badge}>{item.price} €</Text> */}
       </View>
       <Text style={styles.chevron}>›</Text>
     </Pressable>
   );
 }
 
-// ============================================================
-// PANTALLA: HomeScreen
-// ============================================================
-
 export function HomeScreen(): React.JSX.Element {
   const navigation = useNavigation<HomeNavProp>();
+  const { data, isLoading, isError, isFetching, refetch, error } = useItems();
 
-  // TODO: reemplaza este bloque con el hook real
-  // ──────────────────────────────────────────
-  // const { data, isLoading, isError, isFetching, refetch, error } = useItems();
-  //
-  // Placeholders hasta que implementes el hook:
-  const isLoading = false;
-  const isError = false;
-  const isFetching = false;
-  const data: Item[] | undefined = undefined;
-  const refetch = (): void => {};
-  const error: Error | null = null;
-
-  // ── Estados de carga ─────────────────────────────────────
-
-  // TODO: mostrar spinner solo en el primer fetch (sin caché)
   if (isLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={COLORS.accent} />
-        <Text style={styles.loadingText}>Cargando...</Text>
+        <Text style={styles.loadingText}>Cargando máquinas...</Text>
       </View>
     );
   }
 
-  // TODO: mostrar error con botón de reintentar
   if (isError) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>❌ No se pudo cargar la lista</Text>
         <Text style={styles.errorDetail}>{(error as Error)?.message}</Text>
-        <Pressable style={styles.retryButton} onPress={refetch}>
+        <Pressable style={styles.retryButton} onPress={() => refetch()}>
           <Text style={styles.retryButtonText}>Reintentar</Text>
         </Pressable>
       </View>
@@ -122,41 +92,28 @@ export function HomeScreen(): React.JSX.Element {
 
   return (
     <View style={styles.container}>
-      {!data ? (
-        <View style={styles.centered}>
-          <Text style={styles.hint}>
-            Implementa useItems() en src/hooks/useItems.ts para ver los datos
+      <FlatList
+        data={data ?? []}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        onRefresh={refetch}
+        refreshing={isFetching && !isLoading}
+        ListEmptyComponent={
+          <View style={styles.centered}>
+            <Text style={styles.emptyText}>No hay máquinas disponibles.</Text>
+          </View>
+        }
+        ListHeaderComponent={
+          <Text style={styles.countLabel}>
+            {(data ?? []).length} máquina{(data ?? []).length !== 1 ? 's' : ''}
           </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={data}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          // TODO: pull-to-refresh con refetch
-          onRefresh={refetch}
-          refreshing={isFetching && !isLoading}
-          ListEmptyComponent={
-            <View style={styles.centered}>
-              <Text style={styles.emptyText}>No hay ítems disponibles.</Text>
-            </View>
-          }
-          ListHeaderComponent={
-            <Text style={styles.countLabel}>
-              {data.length} ítem{data.length !== 1 ? 's' : ''}
-            </Text>
-          }
-        />
-      )}
+        }
+      />
     </View>
   );
 }
-
-// ============================================================
-// ESTILOS
-// ============================================================
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
@@ -209,5 +166,4 @@ const styles = StyleSheet.create({
   },
   retryButtonText: { ...TYPOGRAPHY.body, color: COLORS.background, fontWeight: '600' },
   emptyText: { ...TYPOGRAPHY.body, color: COLORS.textSecondary, textAlign: 'center' },
-  hint: { ...TYPOGRAPHY.caption, textAlign: 'center', color: COLORS.textMuted },
 });
