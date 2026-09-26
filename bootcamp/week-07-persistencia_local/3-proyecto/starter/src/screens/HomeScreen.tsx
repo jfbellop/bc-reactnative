@@ -1,9 +1,10 @@
 // src/screens/HomeScreen.tsx
-// Lista de ítems con soporte offline (caché AsyncStorage) y
-// respeto de las preferencias del usuario (orden, modo compacto).
-// Esta pantalla está COMPLETAMENTE IMPLEMENTADA — es el punto de partida.
+// Dominio: Máquinas Expendedoras (VendCorp)
+//
+// Lista el inventario aplicando las PREFERENCIAS (MMKV) y mostrando el BANNER
+// OFFLINE cuando los datos vienen de la caché de AsyncStorage.
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,67 +12,111 @@ import {
   StyleSheet,
   Text,
   View,
+  type ListRenderItem,
 } from 'react-native';
-import type { HomeScreenProps } from '../navigation/types';
-import { useItems } from '../hooks/useItems';
-import { usePreferences } from '../hooks/usePreferences';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
 import type { Item } from '../types';
+import type { RootStackParamList } from '../navigation/types';
+import { useItems } from '../hooks/useItems';
+import { usePreferences } from '../hooks/usePreferences';
+import { getSimulatedMode, setSimulatedMode } from '../services/localApi';
+import {
+  formatCop,
+  getMachineCode,
+  getMachineStatus,
+  MACHINE_STATUS,
+  sortAndFilterMachines,
+} from '../utils/machine';
 
-// ─── Sub-componente: fila de ítem ────────────────────────────────────────────
+type HomeNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
-interface ItemRowProps {
+// ──────────────────────────────────────────────
+// SUB-COMPONENTE: tarjeta de máquina
+// ──────────────────────────────────────────────
+
+interface MachineCardProps {
   item: Item;
   compact: boolean;
+  onPress: () => void;
 }
 
-function ItemRow({ item, compact }: ItemRowProps): React.JSX.Element {
+function MachineCard({ item, compact, onPress }: MachineCardProps): React.JSX.Element {
+  const status = MACHINE_STATUS[getMachineStatus(item.stock)];
+
   return (
-    <View style={[styles.row, compact && styles.rowCompact]}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{String(item.id)}</Text>
+    <Pressable
+      style={({ pressed }) => [
+        styles.card,
+        compact && styles.cardCompact,
+        pressed && styles.cardPressed,
+      ]}
+      onPress={onPress}
+      testID={`machine-card-${item.id}`}
+    >
+      <View style={[styles.avatar, compact && styles.avatarCompact]}>
+        <Text style={styles.avatarText}>{getMachineCode(item.name)}</Text>
       </View>
-      <View style={styles.rowContent}>
-        <Text style={styles.rowTitle} numberOfLines={compact ? 1 : 2}>
-          {item.title}
+
+      <View style={styles.cardContent}>
+        <Text style={styles.cardTitle} numberOfLines={1}>
+          {item.name}
         </Text>
+
+        {/* El modo compacto oculta la ubicación */}
         {!compact && (
-          <Text style={styles.rowBody} numberOfLines={2}>
-            {item.body}
+          <Text style={styles.cardSubtitle} numberOfLines={1}>
+            {item.description}
           </Text>
         )}
+
+        <View style={styles.cardFooter}>
+          <Text style={styles.cardPrice}>{formatCop(item.price)}</Text>
+          <Text style={styles.cardStock}>{item.stock} uds</Text>
+          <Text style={[styles.cardStatus, { color: status.color }]}>{status.label}</Text>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
-// ─── Pantalla ────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────
+// PANTALLA
+// ──────────────────────────────────────────────
 
-export function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
-  const { data, isLoading, isError, refetch, isFetching } = useItems();
-  const { sortOrder, compactMode } = usePreferences();
+export function HomeScreen(): React.JSX.Element {
+  const navigation = useNavigation<HomeNavProp>();
+  const { data, isLoading, isError, isFetching, refetch, error } = useItems();
+  const { sortOrder, compactMode, itemsPerPage, lowStockOnly } = usePreferences();
 
-  // Aplicar ordenación de la preferencia MMKV
-  const sortedItems = React.useMemo(() => {
-    if (!data?.items) return [];
-    return [...data.items].sort((a, b) =>
-      sortOrder === 'asc'
-        ? a.title.localeCompare(b.title)
-        : b.title.localeCompare(a.title),
-    );
-  }, [data?.items, sortOrder]);
-
-  const renderItem = useCallback(
-    ({ item }: { item: Item }) => (
-      <ItemRow item={item} compact={compactMode} />
-    ),
-    [compactMode],
+  const [simulatedOffline, setSimulatedOffline] = useState(
+    getSimulatedMode() === 'offline'
   );
+
+  // Preferencias → lista final (filtro + orden + límite)
+  const machines = useMemo(
+    () =>
+      sortAndFilterMachines(data?.items ?? [], {
+        sortOrder,
+        lowStockOnly,
+        itemsPerPage,
+      }),
+    [data?.items, sortOrder, lowStockOnly, itemsPerPage]
+  );
+
+  const toggleSimulatedOffline = useCallback(() => {
+    const next = simulatedOffline ? 'normal' : 'offline';
+    setSimulatedMode(next);
+    setSimulatedOffline(next !== 'normal');
+  }, [simulatedOffline]);
 
   if (isLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={COLORS.accent} />
+        <Text style={styles.loadingText}>Cargando inventario...</Text>
       </View>
     );
   }
@@ -79,27 +124,44 @@ export function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
   if (isError && !data) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>No hay conexión y no hay caché disponible</Text>
-        <Pressable style={styles.retryBtn} onPress={() => refetch()}>
-          <Text style={styles.retryText}>Reintentar</Text>
+        <Text style={styles.errorText}>❌ Sin conexión y sin datos en caché</Text>
+        <Text style={styles.errorDetail}>{(error as Error)?.message}</Text>
+        <Pressable style={styles.retryButton} onPress={() => refetch()}>
+          <Text style={styles.retryButtonText}>Reintentar</Text>
         </Pressable>
+        <Text style={styles.hintSmall}>
+          Consejo: la primera carga necesita conexión para llenar la caché.
+        </Text>
       </View>
     );
   }
 
+  const renderItem: ListRenderItem<Item> = ({ item }) => (
+    <MachineCard
+      item={item}
+      compact={compactMode}
+      onPress={() => navigation.navigate('Edit', { id: item.id, name: item.name })}
+    />
+  );
+
+  const total = data?.items.length ?? 0;
+
   return (
     <View style={styles.container}>
-      {/* Banner offline — visible cuando los datos vienen del cache */}
+      {/* Banner offline — aparece cuando los datos vienen de la caché */}
       {data?.source === 'cache' && (
         <View style={styles.offlineBanner}>
           <Text style={styles.offlineText}>
-            ⚠️  Sin red — mostrando datos guardados localmente
+            ⚠️ Sin conexión — mostrando datos guardados localmente
+            {data.cachedAt
+              ? ` (${new Date(data.cachedAt).toLocaleTimeString()})`
+              : ''}
           </Text>
         </View>
       )}
 
       <FlatList
-        data={sortedItems}
+        data={machines}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
@@ -109,14 +171,28 @@ export function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
         ListHeaderComponent={
           <View style={styles.listHeader}>
             <Text style={styles.listHeaderText}>
-              {sortedItems.length} ítems · Orden: {sortOrder === 'asc' ? 'A→Z' : 'Z→A'}
+              {machines.length}
+              {machines.length !== total ? ` de ${total}` : ''} máquinas ·{' '}
+              {sortOrder === 'asc' ? 'A→Z' : 'Z→A'}
               {compactMode ? ' · Compacto' : ''}
+              {lowStockOnly ? ' · Solo recargas' : ''}
             </Text>
+
+            {/* Simulador de caída de red (con el modo remoto apagar el WiFi) */}
+            <Pressable onPress={toggleSimulatedOffline} style={styles.simToggle}>
+              <Text style={styles.simToggleText}>
+                {simulatedOffline ? '▶️ Restaurar conexión' : '🔌 Simular sin conexión'}
+              </Text>
+            </Pressable>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text style={TYPOGRAPHY.body}>No hay ítems</Text>
+            <Text style={styles.emptyText}>
+              {lowStockOnly
+                ? 'Todas las máquinas están operativas 🎉'
+                : 'No hay máquinas registradas'}
+            </Text>
           </View>
         }
       />
@@ -124,47 +200,81 @@ export function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
   );
 }
 
-// ─── Estilos ─────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────
+// ESTILOS
+// ──────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: SPACING.md },
-  list: { paddingVertical: SPACING.sm },
-  listHeader: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs },
-  listHeaderText: { ...TYPOGRAPHY.caption },
+  list: { paddingVertical: SPACING.sm, paddingBottom: SPACING.xl },
   separator: { height: 1, backgroundColor: COLORS.border, marginHorizontal: SPACING.md },
+  listHeader: {
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.sm,
+    gap: SPACING.sm,
+  },
+  listHeaderText: { ...TYPOGRAPHY.caption, textTransform: 'uppercase', letterSpacing: 0.5 },
+  simToggle: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  simToggleText: { ...TYPOGRAPHY.caption, color: COLORS.accent },
+
   offlineBanner: {
-    backgroundColor: '#78350f',
+    backgroundColor: COLORS.offlineBackground,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
-  offlineText: { ...TYPOGRAPHY.caption, color: '#fbbf24' },
-  errorText: { ...TYPOGRAPHY.body, textAlign: 'center' },
-  retryBtn: {
-    backgroundColor: COLORS.accent,
+  offlineText: { ...TYPOGRAPHY.caption, color: COLORS.offlineText, fontWeight: '600' },
+
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+  },
+  cardCompact: { paddingVertical: SPACING.sm },
+  cardPressed: { opacity: 0.7 },
+  avatar: {
+    width: 44,
+    height: 44,
     borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCompact: { width: 32, height: 32 },
+  avatarText: { ...TYPOGRAPHY.h3, color: COLORS.accent },
+  cardContent: { flex: 1, gap: SPACING.xs },
+  cardTitle: { ...TYPOGRAPHY.body, fontWeight: '600' },
+  cardSubtitle: { ...TYPOGRAPHY.caption },
+  cardFooter: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  cardPrice: { ...TYPOGRAPHY.caption, color: COLORS.accent, fontWeight: '700' },
+  cardStock: { ...TYPOGRAPHY.caption, flex: 1 },
+  cardStatus: { ...TYPOGRAPHY.caption, fontWeight: '600' },
+
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    padding: SPACING.lg,
+  },
+  loadingText: { ...TYPOGRAPHY.caption },
+  errorText: { ...TYPOGRAPHY.h3, color: COLORS.error },
+  errorDetail: { ...TYPOGRAPHY.caption, textAlign: 'center' },
+  emptyText: { ...TYPOGRAPHY.body, color: COLORS.textSecondary, textAlign: 'center' },
+  hintSmall: { ...TYPOGRAPHY.caption, textAlign: 'center', fontStyle: 'italic' },
+  retryButton: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
   },
-  retryText: { ...TYPOGRAPHY.body, color: '#fff', fontWeight: '700' },
-  row: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    alignItems: 'flex-start',
-    gap: SPACING.sm,
-  },
-  rowCompact: { paddingVertical: SPACING.sm },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  rowContent: { flex: 1, gap: 2 },
-  rowTitle: { ...TYPOGRAPHY.body, fontWeight: '600' },
-  rowBody: { ...TYPOGRAPHY.caption },
+  retryButtonText: { ...TYPOGRAPHY.body, color: COLORS.background, fontWeight: '600' },
 });

@@ -1,28 +1,32 @@
 // src/components/FormField.tsx
-// Componente reutilizable: encapsula Controller + TextInput + error.
-// Reutilizado de semana 06.
+// Componente REUTILIZABLE: Controller (RHF) + TextInput + mensaje de error (Zod).
+// Reutilizado de la semana 06.
 
 import React from 'react';
-import {
-  Controller,
-  Control,
-  FieldPath,
-  FieldValues,
-} from 'react-hook-form';
 import {
   StyleSheet,
   Text,
   TextInput,
-  TextInputProps,
   View,
+  type TextInputProps,
 } from 'react-native';
+import {
+  Controller,
+  type Control,
+  type FieldPath,
+  type FieldValues,
+} from 'react-hook-form';
+
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
 
-interface FormFieldProps<T extends FieldValues> extends TextInputProps {
-  control: Control<T>;
+interface FormFieldProps<T extends FieldValues>
+  extends Omit<TextInputProps, 'value' | 'onChangeText' | 'onBlur'> {
+  /** Los dos `any` finales son TContext y TTransformedValues (z.coerce). */
+  control: Control<T, any, any>;
   name: FieldPath<T>;
   label: string;
   errorMessage?: string;
+  hint?: string;
 }
 
 export function FormField<T extends FieldValues>({
@@ -30,43 +34,60 @@ export function FormField<T extends FieldValues>({
   name,
   label,
   errorMessage,
-  ...inputProps
+  hint,
+  ...textInputProps
 }: FormFieldProps<T>): React.JSX.Element {
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={styles.container}>
+      <Text style={styles.label}>{label.toUpperCase()}</Text>
+
       <Controller
         control={control}
         name={name}
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
-            style={[styles.input, errorMessage ? styles.inputError : null]}
-            value={value as string}
+            {...textInputProps}
+            style={[
+              styles.input,
+              textInputProps.multiline === true && styles.inputMultiline,
+              !!errorMessage && styles.inputError,
+            ]}
+            value={value == null ? '' : String(value)}
             onChangeText={onChange}
             onBlur={onBlur}
             placeholderTextColor={COLORS.textMuted}
-            {...inputProps}
           />
         )}
       />
-      {/* minHeight: 16 evita saltos de layout al aparecer/desaparecer el error */}
-      <Text style={styles.error}>{errorMessage ?? ''}</Text>
+
+      {/* Espacio reservado para el error: evita saltos de layout */}
+      <Text
+        style={[styles.helper, errorMessage ? styles.helperError : null]}
+        numberOfLines={2}
+      >
+        {errorMessage ?? hint ?? ''}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  field: { gap: SPACING.xs },
-  label: { ...TYPOGRAPHY.label },
+  container: { gap: SPACING.xs },
+  label: {
+    ...TYPOGRAPHY.label,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
   input: {
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     padding: SPACING.md,
-    color: COLORS.text,
-    backgroundColor: COLORS.surface,
-    fontSize: 16,
+    ...TYPOGRAPHY.body,
   },
-  inputError: { borderColor: COLORS.danger },
-  error: { fontSize: 12, color: COLORS.danger, minHeight: 16 },
+  inputMultiline: { minHeight: 96, paddingTop: SPACING.md },
+  inputError: { borderColor: COLORS.error },
+  helper: { ...TYPOGRAPHY.caption, minHeight: 16 },
+  helperError: { color: COLORS.error },
 });

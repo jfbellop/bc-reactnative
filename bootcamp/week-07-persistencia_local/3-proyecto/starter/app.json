@@ -1,25 +1,20 @@
 {
   "expo": {
-    "name": "Week 07 — Persistencia Local",
-    "slug": "week-07-persistencia-local",
+    "name": "VendCorp — Semana 07",
+    "slug": "week07-persistencia-local",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#0f172a"
-    },
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "dev.ergrato.bootcamp.week07"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0f172a"
+        "backgroundColor": "#0d1117"
       },
       "package": "dev.ergrato.bootcamp.week07"
-    },
-    "newArchEnabled": true
+    }
   }
 }

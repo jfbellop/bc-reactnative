@@ -1,56 +1,84 @@
 // src/hooks/usePreferences.ts
-// Hook de preferencias del usuario almacenadas con MMKV.
-// TODO: implementar los hooks reactivos de MMKV.
+// Dominio: Máquinas Expendedoras (VendCorp)
+//
+// Preferencias del usuario persistidas con MMKV (sincrónico, sin await).
+// Es el hook que exige la rúbrica: encapsula TODA la lógica de almacenamiento
+// y exporta helpers tipados, para que las pantallas no toquen `storage`.
 
-// TODO: importar los hooks de MMKV
-// import { useMMKVString, useMMKVBoolean, useMMKVNumber } from 'react-native-mmkv';
-// import { storage } from '../storage/mmkv';
+import { useMMKVBoolean, useMMKVNumber, useMMKVString } from '../storage/mmkv';
+import { ITEMS_PER_PAGE_OPTIONS, type SortOrder } from '../utils/machine';
 
-// ─── Claves de preferencias (evitar strings sueltos) ─────────────────────────
-const PREF_KEYS = {
-  SORT_ORDER:   'pref_sortOrder',
+// ─── Claves (constantes: nada de strings sueltos por las pantallas) ──────────
+export const PREF_KEYS = {
+  SORT_ORDER: 'pref_sortOrder',
   COMPACT_MODE: 'pref_compactMode',
   ITEMS_PER_PAGE: 'pref_itemsPerPage',
-  // TODO: agrega claves específicas de tu dominio
-  // Ejemplo (Farmacia): SHOW_OUT_OF_STOCK: 'pref_showOutOfStock',
+  // Preferencia propia del dominio:
+  LOW_STOCK_ONLY: 'pref_lowStockOnly',
 } as const;
 
-// ─── Tipo de los valores de sortOrder ─────────────────────────────────────────
-export type SortOrder = 'asc' | 'desc';
+// ─── Valores por defecto ────────────────────────────────────────────────────
+export const PREF_DEFAULTS = {
+  sortOrder: 'asc' as SortOrder,
+  compactMode: false,
+  itemsPerPage: 10,
+  lowStockOnly: false,
+} as const;
 
-// ─── Hook principal ────────────────────────────────────────────────────────────
+const VALID_SORT_ORDERS: SortOrder[] = ['asc', 'desc'];
+
+function toSortOrder(value: string | undefined): SortOrder {
+  return VALID_SORT_ORDERS.includes(value as SortOrder)
+    ? (value as SortOrder)
+    : PREF_DEFAULTS.sortOrder;
+}
+
+function toItemsPerPage(value: number | undefined): number {
+  return ITEMS_PER_PAGE_OPTIONS.includes(value as (typeof ITEMS_PER_PAGE_OPTIONS)[number])
+    ? (value as number)
+    : PREF_DEFAULTS.itemsPerPage;
+}
+
+// ─── Hook principal ─────────────────────────────────────────────────────────
+
 export function usePreferences() {
-  // TODO: reemplazar los useState por hooks de MMKV
-  // ─────────────────────────────────────────────
-  // const [sortOrder, setSortOrder]       = useMMKVString(PREF_KEYS.SORT_ORDER, storage);
-  // const [compactMode, setCompactMode]   = useMMKVBoolean(PREF_KEYS.COMPACT_MODE, storage);
-  // const [itemsPerPage, setItemsPerPage] = useMMKVNumber(PREF_KEYS.ITEMS_PER_PAGE, storage);
-
-  // Placeholder — reemplazar al implementar
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const sortOrder = 'asc';
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const setSortOrder = (_value: string | undefined) => {};
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const compactMode = false;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const setCompactMode = (_value: boolean | undefined) => {};
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const itemsPerPage = 10;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const setItemsPerPage = (_value: number | undefined) => {};
-
-  // TODO: agrega preferencias adicionales de tu dominio aquí
+  // Los hooks de MMKV son reactivos: al cambiar el valor, el componente que los
+  // usa se vuelve a renderizar y el dato ya quedó en disco (sin await).
+  const [sortOrderRaw, setSortOrderRaw] = useMMKVString(PREF_KEYS.SORT_ORDER);
+  const [compactModeRaw, setCompactModeRaw] = useMMKVBoolean(PREF_KEYS.COMPACT_MODE);
+  const [itemsPerPageRaw, setItemsPerPageRaw] = useMMKVNumber(PREF_KEYS.ITEMS_PER_PAGE);
+  const [lowStockOnlyRaw, setLowStockOnlyRaw] = useMMKVBoolean(PREF_KEYS.LOW_STOCK_ONLY);
 
   return {
-    // Valores con defaults para evitar undefined
-    sortOrder: (sortOrder ?? 'asc') as SortOrder,
-    setSortOrder: (value: SortOrder) => setSortOrder(value),
+    /** Orden alfabético de la lista: 'asc' (A→Z) | 'desc' (Z→A) */
+    sortOrder: toSortOrder(sortOrderRaw),
+    setSortOrder: (value: SortOrder) => setSortOrderRaw(value),
+    /** Alterna el modo compacto de las tarjetas */
+    toggleSortOrder: () =>
+      setSortOrderRaw(toSortOrder(sortOrderRaw) === 'asc' ? 'desc' : 'asc'),
 
-    compactMode: compactMode ?? false,
-    setCompactMode,
+    compactMode: compactModeRaw ?? PREF_DEFAULTS.compactMode,
+    setCompactMode: (value: boolean) => setCompactModeRaw(value),
+    toggleCompactMode: () => setCompactModeRaw(!(compactModeRaw ?? PREF_DEFAULTS.compactMode)),
 
-    itemsPerPage: itemsPerPage ?? 10,
-    setItemsPerPage: (value: number) => setItemsPerPage(value),
+    /** Cuántas máquinas mostrar (0 = todas) */
+    itemsPerPage: toItemsPerPage(itemsPerPageRaw),
+    setItemsPerPage: (value: number) => setItemsPerPageRaw(value),
+
+    /** Dominio: mostrar solo máquinas que requieren recarga */
+    lowStockOnly: lowStockOnlyRaw ?? PREF_DEFAULTS.lowStockOnly,
+    setLowStockOnly: (value: boolean) => setLowStockOnlyRaw(value),
+    toggleLowStockOnly: () =>
+      setLowStockOnlyRaw(!(lowStockOnlyRaw ?? PREF_DEFAULTS.lowStockOnly)),
+
+    /** Restablece todas las preferencias (borra las claves de MMKV) */
+    resetPreferences: () => {
+      setSortOrderRaw(undefined);
+      setCompactModeRaw(undefined);
+      setItemsPerPageRaw(undefined);
+      setLowStockOnlyRaw(undefined);
+    },
   };
 }
+
+export type Preferences = ReturnType<typeof usePreferences>;

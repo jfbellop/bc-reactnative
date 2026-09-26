@@ -1,15 +1,13 @@
 // src/screens/SettingsScreen.tsx
-// Pantalla de ajustes con preferencias persistidas en MMKV
-// y un dato sensible persistido con Expo SecureStore.
-//
-// Esta es la pantalla CLAVE de la semana 07.
-// El estudiante debe implementar los TODOs para hacer funcionar
-// la persistencia real en lugar de los valores hardcodeados.
+// Dominio: Máquinas Expendedoras (VendCorp)
+// Pantalla clave de la semana 07:
+//   · Preferencias persistidas con MMKV (sin botón de guardar)
+//   · Dato sensible cifrado con Expo SecureStore (código de acceso técnico)
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,244 +15,343 @@ import {
   Text,
   View,
 } from 'react-native';
-
-// TODO semana 07: importar SecureStore
-// import * as SecureStore from 'expo-secure-store';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
-import { usePreferences } from '../hooks/usePreferences';
+import { PREF_KEYS, usePreferences } from '../hooks/usePreferences';
+import { storageBackend, storageReady, useMMKVBoolean } from '../storage/mmkv';
+import { ITEMS_PER_PAGE_OPTIONS } from '../utils/machine';
+import {
+  deleteAccessCode,
+  generateAccessCode,
+  hasAccessCode,
+  maskAccessCode,
+  readAccessCode,
+  saveAccessCode,
+} from '../services/accessCode';
+import { useQueryClient } from '@tanstack/react-query';
+import { clearMachinesCache, ITEMS_QUERY_KEY } from '../hooks/useItems';
 
-// ============================================================
-// Clave para el dato sensible de ejemplo (SecureStore)
-// Adaptar a tu dominio: 'USER_PIN', 'API_KEY', 'ACCESS_CODE'…
-// ============================================================
-const SENSITIVE_KEY = 'demo_sensitive_value';
-const MOCK_SENSITIVE = 'SuPeRsEcReT-2025';
+// Preferencia exclusiva de esta pantalla, para demostrar que MMKV sirve en
+// cualquier componente (no solo dentro de usePreferences).
+const AUTO_REFRESH_KEY = 'pref_autoRefresh';
 
 export function SettingsScreen(): React.JSX.Element {
   const {
     sortOrder,
-    setSortOrder,
+    toggleSortOrder,
     compactMode,
     setCompactMode,
     itemsPerPage,
     setItemsPerPage,
+    lowStockOnly,
+    setLowStockOnly,
+    resetPreferences,
   } = usePreferences();
 
-  // Estado local para mostrar si el dato sensible está guardado
-  const [isSaved, setIsSaved] = useState(false);
-  const [maskedValue, setMaskedValue] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useMMKVBoolean(AUTO_REFRESH_KEY);
+  const queryClient = useQueryClient();
 
-  // ============================================================
-  // Función para guardar el dato sensible con SecureStore
-  // ============================================================
-  async function handleSaveSensitive(): Promise<void> {
-    // TODO: reemplaza el alert con SecureStore.setItemAsync
-    //
-    // await SecureStore.setItemAsync(SENSITIVE_KEY, MOCK_SENSITIVE);
+  // ── Estado del dato sensible (SecureStore) ─────────────────
+  const [hasCode, setHasCode] = useState(false);
+  const [maskedCode, setMaskedCode] = useState<string | null>(null);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
 
-    Alert.alert(
-      '⚠️ Pendiente',
-      'Implementa SecureStore.setItemAsync para guardar el dato sensible.',
-    );
+  // Al volver a la pantalla comprobamos si ya existe un código guardado.
+  // El catch cubre el caso de entornos sin almacén seguro (p. ej. web).
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      hasAccessCode()
+        .then((exists) => {
+          if (active) setHasCode(exists);
+        })
+        .catch(() => {
+          if (active) setHasCode(false);
+        });
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
-    // Una vez implementado, descomenta:
-    // setIsSaved(true);
+  async function handleGenerateAndSave(): Promise<void> {
+    setIsBusy(true);
+    try {
+      // El código se genera al momento: nunca está escrito en el código fuente.
+      const code = generateAccessCode();
+      const info = await saveAccessCode(code);
+      setHasCode(true);
+      setSavedAt(info.savedAt);
+      setMaskedCode(null); // no mostramos el valor recién guardado
+      Alert.alert(
+        'Código guardado',
+        `Se cifró un nuevo código de acceso con SecureStore.\n\nVista previa: ${info.masked}`
+      );
+    } catch (error) {
+      Alert.alert('Error', `No se pudo guardar en SecureStore: ${(error as Error).message}`);
+    } finally {
+      setIsBusy(false);
+    }
   }
 
-  // ============================================================
-  // Función para leer el dato sensible desde SecureStore
-  // ============================================================
-  async function handleReadSensitive(): Promise<void> {
-    // TODO: reemplaza con SecureStore.getItemAsync
-    //
-    // const value = await SecureStore.getItemAsync(SENSITIVE_KEY);
-    // if (value) {
-    //   // Mostrar solo primeros/últimos caracteres (nunca el valor completo en UI)
-    //   const masked = value.slice(0, 3) + '•••' + value.slice(-3);
-    //   setMaskedValue(masked);
-    // } else {
-    //   Alert.alert('No encontrado', 'No hay dato sensible guardado aún.');
-    // }
-
-    Alert.alert(
-      '⚠️ Pendiente',
-      'Implementa SecureStore.getItemAsync para leer el dato sensible.',
-    );
+  async function handleRead(): Promise<void> {
+    setIsBusy(true);
+    try {
+      const stored = await readAccessCode();
+      if (!stored) {
+        Alert.alert('Sin datos', 'Todavía no hay un código guardado en SecureStore.');
+        return;
+      }
+      // El valor completo NUNCA se muestra: solo una versión enmascarada.
+      setMaskedCode(maskAccessCode(stored.code));
+      setSavedAt(stored.savedAt);
+    } catch (error) {
+      Alert.alert('Error', `No se pudo leer de SecureStore: ${(error as Error).message}`);
+    } finally {
+      setIsBusy(false);
+    }
   }
 
-  // ============================================================
-  // Función para eliminar el dato sensible de SecureStore
-  // ============================================================
-  async function handleDeleteSensitive(): Promise<void> {
-    // TODO: reemplaza con SecureStore.deleteItemAsync
-    //
-    // await SecureStore.deleteItemAsync(SENSITIVE_KEY);
-    // setIsSaved(false);
-    // setMaskedValue(null);
-    // Alert.alert('Eliminado', 'El dato sensible fue removido de SecureStore.');
+  async function handleDelete(): Promise<void> {
+    setIsBusy(true);
+    try {
+      await deleteAccessCode();
+      setHasCode(false);
+      setMaskedCode(null);
+      setSavedAt(null);
+      Alert.alert('Eliminado', 'El código de acceso se borró de SecureStore.');
+    } catch (error) {
+      Alert.alert('Error', `No se pudo eliminar: ${(error as Error).message}`);
+    } finally {
+      setIsBusy(false);
+    }
+  }
 
-    Alert.alert(
-      '⚠️ Pendiente',
-      'Implementa SecureStore.deleteItemAsync para eliminar el dato sensible.',
-    );
+  async function handleClearCache(): Promise<void> {
+    await clearMachinesCache();
+    await queryClient.invalidateQueries({ queryKey: ITEMS_QUERY_KEY });
+    Alert.alert('Caché borrada', 'Se eliminó la copia offline del inventario.');
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-
-      {/* ──────────────────────────────────────────────────────
-          SECCIÓN MMKV — Preferencias de la app
-      ────────────────────────────────────────────────────── */}
+      {/* ───────────────────────────────────────────────
+          SECCIÓN 1 — Preferencias (MMKV)
+      ─────────────────────────────────────────────── */}
       <Text style={styles.sectionTitle}>Preferencias de la app</Text>
       <Text style={styles.sectionHint}>
-        Estos valores se persisten con MMKV. Cambian en tiempo real sin
-        necesidad de pulsar "Guardar".
+        Se guardan con MMKV (sincrónico, sin await). Cambian en tiempo real, sin
+        botón "Guardar", y sobreviven al cierre de la app.
       </Text>
 
-      {/* Preferencia: Modo compacto */}
+      {/* Orden de la lista */}
+      <View style={[styles.row, styles.rowColumn]}>
+        <View style={styles.rowInfo}>
+          <Text style={styles.rowLabel}>Orden del inventario</Text>
+          <Text style={styles.rowDesc}>
+            Clave MMKV: <Text style={styles.mono}>{PREF_KEYS.SORT_ORDER}</Text>
+          </Text>
+        </View>
+        <View style={styles.segmented}>
+          {(['asc', 'desc'] as const).map((order) => (
+            <Pressable
+              key={order}
+              onPress={() => sortOrder !== order && toggleSortOrder()}
+              style={[styles.segment, sortOrder === order && styles.segmentActive]}
+            >
+              <Text
+                style={[
+                  styles.segmentText,
+                  sortOrder === order && styles.segmentTextActive,
+                ]}
+              >
+                {order === 'asc' ? 'A → Z' : 'Z → A'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Modo compacto */}
       <View style={styles.row}>
         <View style={styles.rowInfo}>
           <Text style={styles.rowLabel}>Modo compacto</Text>
           <Text style={styles.rowDesc}>
-            Muestra menos información por ítem en la lista
+            Muestra menos información por máquina en la lista
           </Text>
         </View>
-
-        {/* TODO: este Switch ya cambia compactMode en el store.
-             Para que persista en MMKV, implementa useMMKVBoolean
-             dentro de usePreferences. */}
         <Switch
           value={compactMode}
-          onValueChange={(v) => setCompactMode(v)}
+          onValueChange={setCompactMode}
           trackColor={{ false: COLORS.border, true: COLORS.accent }}
-          thumbColor={COLORS.background}
+          thumbColor={COLORS.textPrimary}
         />
       </View>
 
-      {/* Preferencia: Orden de la lista */}
+      {/* Solo máquinas que requieren recarga (preferencia del dominio) */}
+      <View style={styles.row}>
+        <View style={styles.rowInfo}>
+          <Text style={styles.rowLabel}>Solo máquinas por recargar</Text>
+          <Text style={styles.rowDesc}>
+            Filtra las que están agotadas o con stock bajo
+          </Text>
+        </View>
+        <Switch
+          value={lowStockOnly}
+          onValueChange={setLowStockOnly}
+          trackColor={{ false: COLORS.border, true: COLORS.warning }}
+          thumbColor={COLORS.textPrimary}
+        />
+      </View>
+
+      {/* Máquinas por página */}
       <View style={[styles.row, styles.rowColumn]}>
-        <Text style={styles.rowLabel}>Orden de la lista</Text>
+        <View style={styles.rowInfo}>
+          <Text style={styles.rowLabel}>Máquinas por página</Text>
+          <Text style={styles.rowDesc}>0 = mostrar todas</Text>
+        </View>
         <View style={styles.segmented}>
-          {(['asc', 'desc'] as const).map((opt) => (
+          {ITEMS_PER_PAGE_OPTIONS.map((option) => (
             <Pressable
-              key={opt}
+              key={option}
+              onPress={() => setItemsPerPage(option)}
               style={[
                 styles.segment,
-                sortOrder === opt && styles.segmentActive,
+                itemsPerPage === option && styles.segmentActive,
               ]}
-              onPress={() => setSortOrder(opt)}
             >
               <Text
                 style={[
                   styles.segmentText,
-                  sortOrder === opt && styles.segmentTextActive,
+                  itemsPerPage === option && styles.segmentTextActive,
                 ]}
               >
-                {opt === 'asc' ? 'A → Z' : 'Z → A'}
+                {option === 0 ? 'Todas' : option}
               </Text>
             </Pressable>
           ))}
         </View>
-        <Text style={styles.rowDesc}>
-          {/* TODO: implementa useMMKVString en usePreferences para
-              que este valor persista entre sesiones. */}
-          Valor actual: <Text style={styles.mono}>{sortOrder}</Text>
-        </Text>
       </View>
 
-      {/* Preferencia: Ítems por página */}
-      <View style={[styles.row, styles.rowColumn]}>
-        <Text style={styles.rowLabel}>Ítems por página</Text>
-        <View style={styles.segmented}>
-          {([5, 10, 20] as const).map((n) => (
-            <Pressable
-              key={n}
-              style={[
-                styles.segment,
-                itemsPerPage === n && styles.segmentActive,
-              ]}
-              onPress={() => setItemsPerPage(n)}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  itemsPerPage === n && styles.segmentTextActive,
-                ]}
-              >
-                {n}
-              </Text>
-            </Pressable>
-          ))}
+      {/* Preferencia local de esta pantalla */}
+      <View style={styles.row}>
+        <View style={styles.rowInfo}>
+          <Text style={styles.rowLabel}>Sincronización automática</Text>
+          <Text style={styles.rowDesc}>
+            Preferencia usada solo aquí · clave{' '}
+            <Text style={styles.mono}>{AUTO_REFRESH_KEY}</Text>
+          </Text>
         </View>
-        <Text style={styles.rowDesc}>
-          {/* TODO: implementa useMMKVNumber en usePreferences para
-              que este valor también persista. */}
-          Valor actual: <Text style={styles.mono}>{itemsPerPage}</Text>
-        </Text>
+        <Switch
+          value={autoRefresh ?? false}
+          onValueChange={setAutoRefresh}
+          trackColor={{ false: COLORS.border, true: COLORS.accent }}
+          thumbColor={COLORS.textPrimary}
+        />
       </View>
 
-      {/* ──────────────────────────────────────────────────────
-          SECCIÓN SecureStore — Dato sensible de demostración
-      ────────────────────────────────────────────────────── */}
+      <Pressable style={styles.resetBtn} onPress={resetPreferences}>
+        <Text style={styles.resetText}>Restablecer preferencias (borra las claves MMKV)</Text>
+      </Pressable>
+
+      {/* ───────────────────────────────────────────────
+          SECCIÓN 2 — Caché offline (AsyncStorage)
+      ─────────────────────────────────────────────── */}
+      <Text style={[styles.sectionTitle, { marginTop: SPACING.xl }]}>
+        Caché sin conexión
+      </Text>
+      <Text style={styles.sectionHint}>
+        El inventario se guarda en AsyncStorage para poder mostrarlo sin red.
+      </Text>
+      <Pressable style={styles.secondaryBtn} onPress={handleClearCache}>
+        <Text style={styles.secondaryBtnText}>🗑️ Borrar caché del inventario</Text>
+      </Pressable>
+
+      {/* ───────────────────────────────────────────────
+          SECCIÓN 3 — Datos sensibles (SecureStore)
+      ─────────────────────────────────────────────── */}
       <Text style={[styles.sectionTitle, { marginTop: SPACING.xl }]}>
         Datos sensibles (SecureStore)
       </Text>
       <Text style={styles.sectionHint}>
-        SecureStore cifra el valor en Keychain (iOS) o Keystore (Android).
-        Nunca mostrar el valor completo en pantalla.
+        El código de acceso técnico se cifra en Keychain (iOS) / Keystore
+        (Android). Nunca se muestra completo en pantalla ni se guarda en
+        AsyncStorage o MMKV.
       </Text>
 
-      <Text style={styles.rowDesc}>
-        Dato de ejemplo: <Text style={styles.mono}>{SENSITIVE_KEY}</Text>
-      </Text>
+      <View style={styles.statusRow}>
+        <Text style={styles.rowDesc}>
+          Estado:{' '}
+          <Text style={{ color: hasCode ? COLORS.success : COLORS.textSecondary, fontWeight: '700' }}>
+            {hasCode ? 'código guardado' : 'sin código guardado'}
+          </Text>
+        </Text>
+        {savedAt && (
+          <Text style={styles.rowDesc}>
+            Guardado: {new Date(savedAt).toLocaleString()}
+          </Text>
+        )}
+      </View>
 
-      {maskedValue && (
+      {maskedCode && (
         <View style={styles.maskedContainer}>
-          <Text style={styles.rowLabel}>Valor leído (enmascarado):</Text>
-          <Text style={styles.maskedValue}>{maskedValue}</Text>
+          <Text style={styles.rowLabel}>Valor leído (enmascarado)</Text>
+          <Text style={styles.maskedValue}>{maskedCode}</Text>
         </View>
       )}
 
       <View style={styles.secureActions}>
-        <Pressable style={styles.btnSecure} onPress={handleSaveSensitive}>
-          <Text style={styles.btnSecureText}>💾 Guardar</Text>
+        <Pressable
+          style={[styles.btnSecure, isBusy && styles.btnDisabled]}
+          onPress={handleGenerateAndSave}
+          disabled={isBusy}
+        >
+          <Text style={styles.btnSecureText}>💾 Generar y guardar</Text>
         </Pressable>
         <Pressable
-          style={[styles.btnSecure, styles.btnSecureAlt]}
-          onPress={handleReadSensitive}
+          style={[styles.btnSecure, styles.btnSecureAlt, isBusy && styles.btnDisabled]}
+          onPress={handleRead}
+          disabled={isBusy}
         >
-          <Text style={[styles.btnSecureText, { color: COLORS.accent }]}>
-            🔍 Leer
-          </Text>
+          <Text style={[styles.btnSecureText, { color: COLORS.accent }]}>🔍 Leer</Text>
         </Pressable>
         <Pressable
-          style={[styles.btnSecure, styles.btnDanger]}
-          onPress={handleDeleteSensitive}
+          style={[styles.btnSecure, styles.btnDanger, isBusy && styles.btnDisabled]}
+          onPress={handleDelete}
+          disabled={isBusy}
         >
-          <Text style={[styles.btnSecureText, { color: COLORS.error }]}>
-            🗑️ Eliminar
-          </Text>
+          <Text style={[styles.btnSecureText, { color: COLORS.error }]}>🗑️ Eliminar</Text>
         </Pressable>
       </View>
 
-      {/* Nota pedagógica */}
+      {isBusy && <ActivityIndicator color={COLORS.accent} style={{ marginTop: SPACING.sm }} />}
+
+      {/* ───────────────────────────────────────────────
+          Info técnica
+      ─────────────────────────────────────────────── */}
       <View style={styles.infoBox}>
         <Text style={styles.infoText}>
-          💡 <Text style={{ fontWeight: '700' }}>Tip:</Text> En una app real
-          guardarías en SecureStore el token JWT, el PIN del usuario o la
-          clave de cifrado local — nunca en AsyncStorage ni MMKV sin cifrar.
+          💡 <Text style={{ fontWeight: '700' }}>Motor de almacenamiento:</Text>{' '}
+          {storageBackend === 'mmkv'
+            ? 'MMKV nativo (Nitro/JSI) — build nativo detectado.'
+            : 'modo compatibilidad sincrónico sobre AsyncStorage (Expo Go/web). En un dev build (pnpm expo run:android) se usa MMKV nativo automáticamente.'}
         </Text>
       </View>
     </ScrollView>
   );
 }
 
+// ──────────────────────────────────────────────
+// ESTILOS
+// ──────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxl, gap: SPACING.sm },
 
-  sectionTitle: { ...TYPOGRAPHY.subtitle, marginBottom: SPACING.xs },
+  sectionTitle: { ...TYPOGRAPHY.h3, marginBottom: SPACING.xs },
   sectionHint: { ...TYPOGRAPHY.caption, marginBottom: SPACING.md, fontStyle: 'italic' },
 
   row: {
@@ -262,14 +359,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     padding: SPACING.md,
   },
   rowColumn: { flexDirection: 'column', alignItems: 'flex-start', gap: SPACING.sm },
   rowInfo: { flex: 1, marginRight: SPACING.md },
   rowLabel: { ...TYPOGRAPHY.body, fontWeight: '600' },
   rowDesc: { ...TYPOGRAPHY.caption, marginTop: 2 },
-  mono: { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  mono: { ...TYPOGRAPHY.mono, fontSize: 12 },
 
   segmented: { flexDirection: 'row', gap: SPACING.xs },
   segment: {
@@ -283,24 +380,33 @@ const styles = StyleSheet.create({
   segmentText: { ...TYPOGRAPHY.caption },
   segmentTextActive: { color: COLORS.background, fontWeight: '700' },
 
+  resetBtn: { padding: SPACING.sm, alignItems: 'center' },
+  resetText: { ...TYPOGRAPHY.caption, color: COLORS.textMuted },
+
+  secondaryBtn: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    alignItems: 'center',
+  },
+  secondaryBtnText: { ...TYPOGRAPHY.caption, fontWeight: '600' },
+
+  statusRow: { gap: SPACING.xs, marginBottom: SPACING.sm },
   maskedContainer: {
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     padding: SPACING.md,
     gap: SPACING.xs,
   },
-  maskedValue: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '700',
-    color: COLORS.accent,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
+  maskedValue: { ...TYPOGRAPHY.mono, fontSize: 18, color: COLORS.accent, fontWeight: '700' },
 
   secureActions: { flexDirection: 'row', gap: SPACING.sm },
   btnSecure: {
     flex: 1,
     backgroundColor: COLORS.accent,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     padding: SPACING.sm,
     alignItems: 'center',
   },
@@ -314,6 +420,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.error,
   },
+  btnDisabled: { opacity: 0.5 },
   btnSecureText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.background },
 
   infoBox: {

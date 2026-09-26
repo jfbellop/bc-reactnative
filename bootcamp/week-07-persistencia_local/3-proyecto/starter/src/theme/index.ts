@@ -1,16 +1,38 @@
 // src/theme/index.ts
+// Sistema de diseño centralizado — misma paleta que semanas 02-06.
+
 export const COLORS = {
-  background:   '#0f172a',
-  surface:      '#1e293b',
-  surfaceHigh:  '#334155',
-  accent:       '#3b82f6',
-  accentPurple: '#a855f7',
-  success:      '#22c55e',
-  warning:      '#f59e0b',
-  danger:       '#ef4444',
-  text:         '#f8fafc',
-  textMuted:    '#94a3b8',
-  border:       '#334155',
+  background: '#0d1117',
+  surface: '#161b22',
+  card: '#21262d',
+  textPrimary: '#e6edf3',
+  textSecondary: '#8b949e',
+  textMuted: '#484f58',
+  accent: '#61DAFB',
+  success: '#3fb950',
+  warning: '#d29922',
+  error: '#f85149',
+  border: '#30363d',
+  // Banner de modo offline
+  offlineBackground: '#3d2b04',
+  offlineText: '#e3b341',
+} as const;
+
+export const TYPOGRAPHY = {
+  h1: { fontSize: 28, fontWeight: '700' as const, color: COLORS.textPrimary },
+  h2: { fontSize: 22, fontWeight: '600' as const, color: COLORS.textPrimary },
+  h3: { fontSize: 18, fontWeight: '600' as const, color: COLORS.textPrimary },
+  body: { fontSize: 16, fontWeight: '400' as const, color: COLORS.textPrimary },
+  caption: { fontSize: 13, fontWeight: '400' as const, color: COLORS.textSecondary },
+  label: { fontSize: 12, fontWeight: '500' as const, color: COLORS.textMuted },
+  /** Mensaje de error de Zod bajo cada campo */
+  error: { fontSize: 12, fontWeight: '400' as const, color: COLORS.error },
+  /** Valores técnicos (claves de almacenamiento, datos enmascarados) */
+  mono: {
+    fontSize: 13,
+    fontFamily: 'monospace',
+    color: COLORS.textPrimary,
+  },
 } as const;
 
 export const SPACING = {
@@ -23,15 +45,10 @@ export const SPACING = {
 } as const;
 
 export const RADIUS = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-} as const;
-
-export const TYPOGRAPHY = {
-  heading: { fontSize: 22, fontWeight: '700' as const, color: COLORS.text },
-  title:   { fontSize: 17, fontWeight: '600' as const, color: COLORS.text },
-  body:    { fontSize: 15, fontWeight: '400' as const, color: COLORS.text },
-  caption: { fontSize: 13, fontWeight: '400' as const, color: COLORS.textMuted },
-  label:   { fontSize: 13, fontWeight: '600' as const, color: COLORS.text },
+  xs: 4,
+  sm: 6,
+  md: 10,
+  lg: 14,
+  xl: 20,
+  full: 9999,
 } as const;

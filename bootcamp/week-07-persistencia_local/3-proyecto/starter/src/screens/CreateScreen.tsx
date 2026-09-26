@@ -1,8 +1,9 @@
 // src/screens/CreateScreen.tsx
-// Formulario para crear un nuevo ítem.
-// Reutilizado de semana 06 — ya implementado con RHF + Zod.
+// Dominio: Máquinas Expendedoras (VendCorp)
+// Formulario de registro de máquina — misma base de la semana 06
+// (RHF + Zod + FormField) y mutación de TanStack Query.
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -13,41 +14,51 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { FormField } from '../components/FormField';
-import { itemSchema, type ItemFormData } from '../schemas/itemSchema';
+import {
+  itemSchema,
+  type ItemFormData,
+  type ItemFormInput,
+} from '../schemas/itemSchema';
 import { useCreateItem } from '../hooks/useItems';
 
 type CreateNavProp = NativeStackNavigationProp<RootStackParamList, 'Create'>;
 
 export function CreateScreen(): React.JSX.Element {
   const navigation = useNavigation<CreateNavProp>();
+  const { mutateAsync: createItem } = useCreateItem();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ItemFormData>({
+  } = useForm<ItemFormInput, unknown, ItemFormData>({
     resolver: zodResolver(itemSchema),
-    defaultValues: { title: '', body: '' },
+    defaultValues: { name: '', description: '', price: '', stock: '' },
   });
 
-  const { mutate: createItem, isPending } = useCreateItem();
-
-  function onSubmit(data: ItemFormData): void {
-    createItem(
-      { title: data.title, body: data.body ?? '', userId: 1 },
-      { onSuccess: () => navigation.goBack() },
-    );
+  async function onSubmit(data: ItemFormData): Promise<void> {
+    setSubmitError(null);
+    try {
+      await createItem({
+        name: data.name,
+        description: data.description ?? '',
+        price: data.price,
+        stock: data.stock,
+      });
+      navigation.goBack();
+    } catch {
+      setSubmitError('No se pudo registrar la máquina. Revisa la conexión.');
+    }
   }
-
-  const canSubmit = !isSubmitting && !isPending;
 
   return (
     <KeyboardAvoidingView
@@ -60,41 +71,64 @@ export function CreateScreen(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.hint}>
-          Adapta los campos a tu dominio asignado.
+          Registra una máquina expendedora en el inventario de VendCorp.
         </Text>
 
         <FormField
           control={control}
-          name="title"
-          label="Nombre *"
-          placeholder="Nombre del ítem…"
+          name="name"
+          label="Nombre o código *"
+          placeholder="Ej: VM-013 · Snacks Recepción Sur"
           returnKeyType="next"
-          errorMessage={errors.title?.message}
+          errorMessage={errors.name?.message}
         />
 
         <FormField
           control={control}
-          name="body"
-          label="Descripción"
-          placeholder="Descripción opcional…"
+          name="description"
+          label="Ubicación y notas"
+          placeholder="Ej: Torre E — Piso 1, junto a recepción"
           multiline
           numberOfLines={4}
           textAlignVertical="top"
-          errorMessage={errors.body?.message}
+          errorMessage={errors.description?.message}
         />
 
-        {/* TODO: agrega campos adicionales de tu dominio */}
+        <FormField
+          control={control}
+          name="price"
+          label="Tarifa por producto (COP) *"
+          placeholder="2500"
+          keyboardType="numeric"
+          errorMessage={errors.price?.message}
+        />
+
+        <FormField
+          control={control}
+          name="stock"
+          label="Unidades cargadas *"
+          placeholder="0"
+          keyboardType="number-pad"
+          errorMessage={errors.stock?.message}
+        />
+
+        {submitError && (
+          <View style={styles.bannerError}>
+            <Text style={styles.bannerErrorText}>{submitError}</Text>
+          </View>
+        )}
 
         <View style={styles.actions}>
           <Pressable
-            style={[styles.button, !canSubmit && styles.buttonDisabled]}
+            style={[styles.button, isSubmitting && styles.buttonDisabled]}
             onPress={handleSubmit(onSubmit)}
-            disabled={!canSubmit}
+            disabled={isSubmitting}
           >
-            {isSubmitting || isPending
-              ? <ActivityIndicator size="small" color={COLORS.background} />
-              : <Text style={styles.buttonText}>Crear ítem</Text>
-            }
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={COLORS.background} />
+            ) : (
+              <Text style={styles.buttonText}>Registrar máquina</Text>
+            )}
           </Pressable>
 
           <Pressable style={styles.cancel} onPress={() => navigation.goBack()}>
@@ -114,12 +148,20 @@ const styles = StyleSheet.create({
   actions: { gap: SPACING.sm, marginTop: SPACING.sm },
   button: {
     backgroundColor: COLORS.accent,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     padding: SPACING.md,
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.45 },
-  buttonText: { ...TYPOGRAPHY.body, fontWeight: '700' },
+  buttonText: { ...TYPOGRAPHY.body, fontWeight: '700', color: COLORS.background },
   cancel: { alignItems: 'center', padding: SPACING.sm },
   cancelText: { ...TYPOGRAPHY.body, color: COLORS.textMuted },
+  bannerError: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    borderRadius: RADIUS.sm,
+    padding: SPACING.sm,
+  },
+  bannerErrorText: { ...TYPOGRAPHY.caption, color: COLORS.error },
 });

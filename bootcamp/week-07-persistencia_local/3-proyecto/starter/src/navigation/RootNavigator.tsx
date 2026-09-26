@@ -1,22 +1,29 @@
 // src/navigation/RootNavigator.tsx
+// Dominio: Máquinas Expendedoras (VendCorp)
+
 import React from 'react';
-import { Pressable, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Pressable, Text } from 'react-native';
+
 import { HomeScreen } from '../screens/HomeScreen';
 import { CreateScreen } from '../screens/CreateScreen';
+import { EditScreen } from '../screens/EditScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import type { RootStackParamList } from './types';
 import { COLORS } from '../theme';
+import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const headerStyle = { backgroundColor: COLORS.surface } as const;
+const headerTitleStyle = { color: COLORS.textPrimary, fontWeight: '600' as const };
 
 export function RootNavigator(): React.JSX.Element {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: COLORS.surface },
-        headerTintColor: COLORS.text,
-        headerTitleStyle: { fontWeight: '700' },
+        headerStyle,
+        headerTitleStyle,
+        headerTintColor: COLORS.accent,
         contentStyle: { backgroundColor: COLORS.background },
       }}
     >
@@ -24,21 +31,25 @@ export function RootNavigator(): React.JSX.Element {
         name="Home"
         component={HomeScreen}
         options={({ navigation }) => ({
-          title: 'Ítems',
-          headerRight: () => (
-            <Pressable
-              onPress={() => navigation.navigate('Create')}
-              style={{ marginRight: 4 }}
-            >
-              <Text style={{ color: COLORS.accent, fontSize: 28, lineHeight: 32 }}>+</Text>
-            </Pressable>
-          ),
+          title: 'Máquinas Expendedoras',
           headerLeft: () => (
             <Pressable
               onPress={() => navigation.navigate('Settings')}
-              style={{ marginLeft: 4, marginRight: 12 }}
+              hitSlop={12}
+              accessibilityLabel="Ajustes"
             >
               <Text style={{ color: COLORS.accent, fontSize: 20 }}>⚙️</Text>
+            </Pressable>
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => navigation.navigate('Create')}
+              hitSlop={12}
+              accessibilityLabel="Registrar nueva máquina"
+            >
+              <Text style={{ color: COLORS.accent, fontSize: 26, fontWeight: '300' }}>
+                +
+              </Text>
             </Pressable>
           ),
         })}
@@ -46,7 +57,12 @@ export function RootNavigator(): React.JSX.Element {
       <Stack.Screen
         name="Create"
         component={CreateScreen}
-        options={{ title: 'Crear ítem', presentation: 'modal' }}
+        options={{ title: 'Nueva máquina', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="Edit"
+        component={EditScreen}
+        options={({ route }) => ({ title: route.params.name })}
       />
       <Stack.Screen
         name="Settings"
