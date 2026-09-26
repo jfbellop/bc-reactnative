@@ -1,4 +1,5 @@
-// Design tokens for the app.
+// src/theme/index.ts
+// Tokens de diseño (misma paleta de las semanas 02–08).
 
 export const COLORS = {
   background: '#0f172a',
@@ -30,4 +31,13 @@ export const RADII = {
   md: 10,
   lg: 14,
   full: 999,
+} as const;
+
+export const TYPOGRAPHY = {
+  h1: { fontSize: 26, fontWeight: '700' as const, color: COLORS.text },
+  h2: { fontSize: 20, fontWeight: '700' as const, color: COLORS.text },
+  h3: { fontSize: 16, fontWeight: '600' as const, color: COLORS.text },
+  body: { fontSize: 14, color: COLORS.text },
+  caption: { fontSize: 12, color: COLORS.textSecondary },
+  tiny: { fontSize: 11, color: COLORS.textMuted },
 } as const;

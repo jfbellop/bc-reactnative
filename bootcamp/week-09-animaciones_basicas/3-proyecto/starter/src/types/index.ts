@@ -1,21 +1,40 @@
-// Domain types — adapt to your assigned domain.
+// src/types/index.ts
+// Dominio: Máquinas Expendedoras (VendCorp) · Semana 09 — Animaciones
 
-// Base item for the domain list.
-// Add specific fields for your domain.
-// Examples:
-//   Biblioteca: author: string; isbn: string; isAvailable: boolean;
-//   Farmacia: price: number; stock: number; category: string;
-//   Gimnasio: membershipType: string; daysActive: number;
-export interface Item {
+export type MachineStatus = 'operativa' | 'stock_bajo' | 'agotada';
+
+export type Zone = 'Torre A' | 'Torre B' | 'Torre C' | 'Planta';
+
+export interface Machine {
   id: string;
+  /** Código visible: VM-001 */
+  code: string;
   name: string;
-  description: string;
-  // TODO: Add domain-specific fields here
-  progress?: number; // 0-1, used for ProgressBar
+  zone: Zone;
+  location: string;
+  /** Unidades que quedan de la carga */
+  stock: number;
+  /** Capacidad máxima de la máquina */
+  capacity: number;
+  /** Precio por producto en COP */
+  price: number;
+  lastRefill: string;
 }
 
-// Response shape from the API
-export interface ApiResponse<T> {
-  data: T[];
-  total: number;
+/** Resumen que se muestra animado en el encabezado del inventario. */
+export interface InventorySummary {
+  machines: number;
+  outOfStock: number;
+  lowStock: number;
+  /** Carga promedio de la flota: 0–1 (alimenta la ProgressBar) */
+  averageFill: number;
+}
+
+/** Datos que necesita la pantalla de detalle (incluye métricas derivadas). */
+export interface MachineMetrics {
+  fill: number;
+  status: MachineStatus;
+  unitsMissing: number;
+  dailyUse: number;
+  daysToEmpty: number;
 }

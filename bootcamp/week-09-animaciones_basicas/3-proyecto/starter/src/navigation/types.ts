@@ -1,7 +1,7 @@
-// Navigation parameter types for the app.
-// Update according to your domain's needs.
+// src/navigation/types.ts
+// Stack de la semana 09: lista (Home) → detalle de la máquina (Detail).
 
 export type RootStackParamList = {
   Home: undefined;
-  Detail: { itemId: string };
+  Detail: { machineId: string };
 };

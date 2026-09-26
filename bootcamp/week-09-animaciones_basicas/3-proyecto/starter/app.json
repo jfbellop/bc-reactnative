@@ -1,28 +1,20 @@
 {
   "expo": {
-    "name": "Week 09 — Animaciones",
-    "slug": "week09-animaciones",
-    "scheme": "bcanim09",
+    "name": "VendCorp Animaciones",
+    "slug": "vendcorp-animaciones",
+    "scheme": "vendcorp09",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "backgroundColor": "#0f172a"
-    },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "dev.ergrato.week09"
+      "bundleIdentifier": "dev.bcreactnative.vendcorp09"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0f172a"
-      },
-      "package": "dev.ergrato.week09"
+      "package": "dev.bcreactnative.vendcorp09"
     },
-    "plugins": [
-      "expo-router"
-    ]
+    "web": {
+      "bundler": "metro"
+    }
   }
 }
