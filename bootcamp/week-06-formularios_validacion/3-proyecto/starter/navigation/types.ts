@@ -1,8 +1,9 @@
 // src/navigation/types.ts
-// Tipado del stack de navegación
+// Tipado del stack de navegación — Dominio: Máquinas Expendedoras (VendCorp)
 
 export type RootStackParamList = {
-  Home:   undefined;
+  Home: undefined;
   Create: undefined;
-  Edit:   { id: number | string; name: string };
+  /** Edit recibe el id (para la query) y el nombre (para el título del header) */
+  Edit: { id: number; name: string };
 };

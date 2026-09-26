@@ -1,42 +1,44 @@
-// src/theme/index.ts — Paleta, tipografía y espaciado compartidos
-
-import { StyleSheet } from 'react-native';
+// src/theme/index.ts
+// Sistema de diseño centralizado — misma paleta que semanas 02-05.
 
 export const COLORS = {
-  background: '#111827',
-  card: '#1F2937',
-  border: '#374151',
-  accent: '#3B82F6',
-  accentLight: '#93C5FD',
-  text: '#F9FAFB',
-  textMuted: '#6B7280',
-  textSecondary: '#9CA3AF',
-  error: '#EF4444',
-  errorLight: '#FCA5A5',
-  success: '#22C55E',
-  warning: '#F59E0B',
-};
+  background: '#0d1117',
+  surface: '#161b22',
+  card: '#21262d',
+  textPrimary: '#e6edf3',
+  textSecondary: '#8b949e',
+  textMuted: '#484f58',
+  accent: '#61DAFB',
+  success: '#3fb950',
+  warning: '#d29922',
+  error: '#f85149',
+  border: '#30363d',
+} as const;
+
+export const TYPOGRAPHY = {
+  h1: { fontSize: 28, fontWeight: '700' as const, color: COLORS.textPrimary },
+  h2: { fontSize: 22, fontWeight: '600' as const, color: COLORS.textPrimary },
+  h3: { fontSize: 18, fontWeight: '600' as const, color: COLORS.textPrimary },
+  body: { fontSize: 16, fontWeight: '400' as const, color: COLORS.textPrimary },
+  caption: { fontSize: 13, fontWeight: '400' as const, color: COLORS.textSecondary },
+  label: { fontSize: 12, fontWeight: '500' as const, color: COLORS.textMuted },
+  /** Mensaje de error de Zod bajo cada campo */
+  error: { fontSize: 12, fontWeight: '400' as const, color: COLORS.error },
+} as const;
 
 export const SPACING = {
   xs: 4,
   sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 32,
-};
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+} as const;
 
 export const RADIUS = {
   sm: 6,
   md: 10,
-  lg: 16,
-};
-
-export const TYPOGRAPHY = StyleSheet.create({
-  h2:      { fontSize: 20, fontWeight: '700', color: COLORS.text },
-  h3:      { fontSize: 16, fontWeight: '700', color: COLORS.text },
-  body:    { fontSize: 14, fontWeight: '400', color: COLORS.text },
-  label:   { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
-  caption: { fontSize: 12, fontWeight: '400', color: COLORS.textMuted },
-  error:   { fontSize: 12, fontWeight: '400', color: COLORS.errorLight },
-});
+  lg: 14,
+  xl: 20,
+  full: 9999,
+} as const;

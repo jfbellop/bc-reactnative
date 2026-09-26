@@ -34,3 +34,13 @@ export function formatCop(value: number): string {
   const [entera, decimales] = value.toFixed(2).split('.');
   return `$${entera.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${decimales}`;
 }
+
+/**
+ * Extrae el código de la máquina del nombre para mostrarlo en el avatar.
+ * "VM-014 · Snacks Torre C" → "14" · si no hay código, la inicial del nombre.
+ */
+export function getMachineCode(name: string): string {
+  const match = /([A-Z]{2})-(\d+)/i.exec(name);
+  if (match) return match[2];
+  return name.charAt(0).toUpperCase();
+}

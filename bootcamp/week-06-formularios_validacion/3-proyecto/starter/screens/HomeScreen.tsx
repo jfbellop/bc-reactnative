@@ -20,7 +20,7 @@ import type { Item } from '../types';
 import type { RootStackParamList } from '../navigation/types';
 import { useItems } from '../hooks/useItems';
 import { StockBadge } from '../components/StockBadge';
-import { formatCop } from '../utils/machine';
+import { formatCop, getMachineCode } from '../utils/machine';
 
 type HomeNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -43,7 +43,7 @@ function MachineCard({ item, onPress }: MachineCardProps): React.JSX.Element {
       <View style={styles.cardHeader}>
         <View style={styles.cardAvatar}>
           <Text style={styles.cardAvatarText}>
-            {item.name.charAt(0).toUpperCase()}
+            {getMachineCode(item.name)}
           </Text>
         </View>
 
