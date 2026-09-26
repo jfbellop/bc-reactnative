@@ -4,6 +4,8 @@
 // Dominio: Máquinas Expendedoras
 // ============================================================
 
+import type { ImageSourcePropType } from 'react-native';
+
 export type MachineCategory =
   | 'Snacks'
   | 'Bebidas'
@@ -20,7 +22,12 @@ export type MachineStatus =
 export interface VendingMachine {
   id: string;
   name: string;
-  imageUri: string;
+  /**
+   * Admite las dos formas de <Image>:
+   *   · require('../../assets/vm-001.jpg')  → número de módulo (foto local)
+   *   · { uri: 'https://…' }               → imagen remota
+   */
+  imageUri: ImageSourcePropType;
   subtitle: string; // usado como ubicación corta de la máquina
   category: MachineCategory;
   location: string;

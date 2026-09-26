@@ -45,7 +45,19 @@ export function ItemCard({ item, onPress }: ItemCardProps): React.JSX.Element {
         pressed && styles.cardPressed,
       ]}
     >
-      <Image source={{ uri: item.imageUri }} style={styles.cardImage} resizeMode="cover" />
+      {/*
+        imageUri admite las dos formas:
+          · require('../../assets/vm-001.jpg') → módulo local
+          · { uri: 'https://…' }              → imagen remota
+        Por eso se decide en runtime cuál usar.
+      */}
+      <Image
+        source={
+          typeof item.imageUri === 'string' ? { uri: item.imageUri } : item.imageUri
+        }
+        style={styles.cardImage}
+        resizeMode="cover"
+      />
 
       <View style={styles.badgeRow}>
         <View style={styles.categoryBadge}>
